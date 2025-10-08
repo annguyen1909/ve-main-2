@@ -8,7 +8,12 @@ import {
 } from "./ui/icon";
 import { useEffect, useState } from "react";
 import { cn, localePath } from "~/lib/utils";
-import { Link, useLocation, useNavigate, useNavigation } from "@remix-run/react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useNavigation,
+} from "@remix-run/react";
 import { Footer } from "./footer";
 import * as motion from "motion/react-client";
 import {
@@ -22,19 +27,30 @@ import { ContactCtaSection } from "./contact-cta-section";
 
 interface HeaderProps {
   brand: Attachment;
-  translations: AppContext['translations'];
+  translations: AppContext["translations"];
   locale: string;
 }
 
-export default function Header({ brand, translations: t, locale }: HeaderProps) {
+export default function Header({
+  brand,
+  translations: t,
+  locale,
+}: HeaderProps) {
   const [collapse, setCollapse] = useState<boolean>(true);
   const navigation = useNavigation();
-  const [lastHeaderVariant, setLastHeaderVariant] = useState<string | undefined>();
+  const [lastHeaderVariant, setLastHeaderVariant] = useState<
+    string | undefined
+  >();
   const navigate = useNavigate();
   const location = useLocation();
 
   function switchLocale(newLocale: string) {
-    return navigate(localePath(newLocale, location.pathname.replace('/' + locale, '').replace(/\/$/g, '')));
+    return navigate(
+      localePath(
+        newLocale,
+        location.pathname.replace("/" + locale, "").replace(/\/$/g, "")
+      )
+    );
   }
 
   useEffect(() => {
@@ -45,9 +61,9 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
     if (!headerDom) return;
 
     if (document.documentElement.scrollTop > 0) {
-      headerDom.classList.add('opacity-50');
+      headerDom.classList.add("opacity-50");
     } else {
-      headerDom.classList.remove('opacity-50');
+      headerDom.classList.remove("opacity-50");
     }
 
     setLastHeaderVariant(headerDom.dataset.variant);
@@ -60,14 +76,14 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
     if (!headerDom) return;
 
     if (!collapse) {
-      headerDom.dataset.variant = lastHeaderVariant ?? 'light';
+      headerDom.dataset.variant = lastHeaderVariant ?? "light";
       return;
     }
 
     if (document.documentElement.scrollTop > 0) {
-      headerDom.classList.add('opacity-50');
+      headerDom.classList.add("opacity-50");
     } else {
-      headerDom.classList.remove('opacity-50');
+      headerDom.classList.remove("opacity-50");
     }
   }, [collapse, lastHeaderVariant]);
 
@@ -76,63 +92,242 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
       const headerDom = document.getElementById("header");
 
       if (!headerDom) {
-        return
+        return;
       }
 
       if (window.scrollY > 0 && collapse) {
-        headerDom.classList.add('opacity-50');
+        headerDom.classList.add("opacity-50");
       } else {
-        headerDom.classList.remove('opacity-50');
+        headerDom.classList.remove("opacity-50");
       }
     }
 
-    document.addEventListener('scroll', determineIfHeaderBlurred);
+    document.addEventListener("scroll", determineIfHeaderBlurred);
 
     return () => {
-      document.removeEventListener('scroll', determineIfHeaderBlurred);
+      document.removeEventListener("scroll", determineIfHeaderBlurred);
     };
-  }, [collapse])
+  }, [collapse]);
 
   return (
     <header
       className={cn(
-        "fixed top-0 w-full h-20 left-0 z-30 group",
+        "fixed top-0 w-full h-20 left-0 z-30 group text-white",
         !collapse
-          ? "text-white"
-          : "text-white data-[variant=dark]:!text-[#646464]",
       )}
       id="header"
     >
       <Container
         variant="fluid"
-        className="flex item-center h-full relative z-10 py-0 gap-7"
+        className="flex items-center bg-black/70 h-full relative z-10 py-0 gap-7"
       >
-        <Link to={localePath(locale, '')} className="flex items-center gap-1 flex-none">
+        {/* Extended underline across entire header */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-white/20"></div>
+
+        {/* Mobile Logo - visible on mobile only */}
+        <Link
+          to={localePath(locale, "")}
+          className="flex items-center gap-2 flex-none lg:hidden"
+        >
           <img
             src={brand.url}
             alt={brand.description}
-            className={cn(
-              "w-8 h-6",
-              !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
-            )}
+            className="w-8 h-6"
           />
-          <h1
-            className={cn(
-              "font-sans font-semibold uppercase tracking-wide text-sm",
-              !collapse ? "hidden sm:block" : ""
-            )}
-          >
+          <h1 className="font-sans font-semibold uppercase tracking-wide text-sm">
             Visual Ennode
           </h1>
         </Link>
 
+        {/* Desktop Navigation */}
+        <nav className="hidden lg:flex items-center gap-20 flex-1 justify-center relative">
+          <Link
+            to={localePath(locale, "")}
+            className={cn(
+              "flex items-center gap-1 flex-none relative lg:hidden",
+              location.pathname === localePath(locale, "") ||
+                location.pathname === `/${locale}` ||
+                location.pathname === `/${locale}/`
+                ? "after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-[#fff]"
+                : ""
+            )}
+          >
+            <img
+              src={brand.url}
+              alt={brand.description}
+              className={cn(
+                "w-8 h-6",
+                !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
+              )}
+            />
+            <h1
+              className={cn(
+                "font-sans font-semibold uppercase tracking-wide text-sm",
+                !collapse ? "hidden sm:block" : ""
+              )}
+            >
+              Visual Ennode
+            </h1>
+          </Link>
+          <Link
+            to={localePath(locale, "")}
+            className={cn(
+              "flex items-center gap-1 flex-none relative",
+              location.pathname === localePath(locale, "") ||
+                location.pathname === `/${locale}` ||
+                location.pathname === `/${locale}/`
+                ? "after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-[#fff]"
+                : ""
+            )}
+          >
+            <img
+              src={brand.url}
+              alt={brand.description}
+              className={cn(
+                "w-8 h-6",
+                !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
+              )}
+            />
+            <h1
+              className={cn(
+                "font-sans font-semibold uppercase tracking-wide text-sm",
+                !collapse ? "hidden sm:block" : ""
+              )}
+            >
+              Visual Ennode
+            </h1>
+          </Link>
+          <Link
+            to={localePath(locale, "")}
+            className={cn(
+              "font-light text-white/50 text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              location.pathname === localePath(locale, "") ||
+                location.pathname === `/${locale}` ||
+                location.pathname === `/${locale}/`
+                ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                : ""
+            )}
+          >
+            {t["component.header.home"]}
+          </Link>
+          <Link
+            to={localePath(locale, "works")}
+            className={cn(
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              location.pathname.includes("/works")
+                ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                : ""
+            )}
+          >
+            {t["component.header.works"]}
+          </Link>
+          <Link
+            to={localePath(locale, "about")}
+            className={cn(
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              location.pathname.includes("/about")
+                ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                : ""
+            )}
+          >
+            {t["component.header.about"]}
+          </Link>
+          <Link
+            to={localePath(locale, "news")}
+            className={cn(
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              location.pathname.includes("/news")
+                ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                : ""
+            )}
+          >
+            {t["News"]}
+          </Link>
+          <Link
+            to={localePath(locale, "career")}
+            className={cn(
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              location.pathname.includes("/career")
+                ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                : ""
+            )}
+          >
+            {t["component.header.career"]}
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 flex items-center gap-1 relative",
+                  location.pathname.includes("/contact") ||
+                    location.pathname.includes("/ennode")
+                    ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                    : ""
+                )}
+              >
+                Start New Project
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="6,9 12,15 18,9"></polyline>
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="mt-2">
+              <DropdownMenuItem asChild>
+                <Link to={localePath(locale, "contact")}>
+                  {t["component.header.contact"]}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={localePath(locale, "ennode")}>Ennode</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={localePath(locale, "ennode/arc")}>Ennode Arc</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to={localePath(locale, "ennode/digital")}>
+                  Ennode Digital
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+            {/* Desktop Language Selector */}
+            <div className="hidden lg:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex items-center cursor-pointer gap-2 flex-none uppercase font-light text-sm tracking-wide hover:opacity-70 transition-opacity relative"
+                    )}
+                  >
+                    <GlobeIcon className="size-5" /> {locale}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32 mt-2">
+                  <DropdownMenuItem onClick={() => switchLocale("en")}>
+                    English
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => switchLocale("ko")}>
+                    Korean
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+        </nav>
+
+        {/* Mobile Controls */}
         <div className="ml-auto flex items-center gap-7">
           {!collapse ? (
             <motion.div
-              initial={{ translateX: '4rem', opacity: 0 }}
+              initial={{ translateX: "4rem", opacity: 0 }}
               whileInView={{ translateX: 0, opacity: 1 }}
               transition={{ duration: 1, deplay: 3 }}
-              className="flex items-center gap-7"
+              className="flex items-center gap-7 lg:hidden"
             >
               <div className="flex items-center h-10 relative grow w-auto lg:w-64">
                 <MagnifyingGlassIcon className="size-5 absolute top-2.5 left-4" />
@@ -150,8 +345,12 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-14 mt-2">
-                  <DropdownMenuItem onClick={() => switchLocale('en')}>English</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => switchLocale('ko')}>Korean</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => switchLocale("en")}>
+                    English
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => switchLocale("ko")}>
+                    Korean
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -162,7 +361,7 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
             </motion.div>
           ) : (
             <HamburgerMenuIcon
-              className="size-9 cursor-pointer select-none flex-none"
+              className="size-9 cursor-pointer select-none flex-none lg:hidden"
               onClick={() => setCollapse(false)}
             />
           )}
@@ -170,17 +369,20 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
       </Container>
 
       <motion.div
-        initial={{ opacity: 0, }}
+        initial={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
         whileInView={{ opacity: 1 }}
-        className={cn("fixed inset-0 w-full pt-20 h-dvh max-h-screen bg-[#1B1B1B] @container/header", collapse ? "hidden" : "block")}
+        className={cn(
+          "fixed inset-0 w-full pt-20 h-dvh max-h-screen bg-[#1B1B1B] @container/header",
+          collapse ? "hidden" : "block"
+        )}
         style={{ containerType: "size" }}
       >
         <div className="flex flex-col h-full pb-14">
           <div className="p-0 lg:p-7 grow h-full flex items-center justify-center">
             <ul className="font-normal text-3xl tracking-wide flex flex-col items-center gap-10">
               <motion.li
-                initial={{ translateY: '-2rem', opacity: 0 }}
+                initial={{ translateY: "-2rem", opacity: 0 }}
                 whileInView={{ translateY: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
@@ -190,11 +392,11 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
                 >
-                  {t['component.header.home']}
+                  {t["component.header.home"]}
                 </Link>
               </motion.li>
               <motion.li
-                initial={{ translateY: '-2rem', opacity: 0 }}
+                initial={{ translateY: "-2rem", opacity: 0 }}
                 whileInView={{ translateY: 0, opacity: 1 }}
                 transition={{ duration: 0.2, delay: 0.1 }}
               >
@@ -204,11 +406,11 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
                 >
-                  {t['component.header.works']}
+                  {t["component.header.works"]}
                 </Link>
               </motion.li>
               <motion.li
-                initial={{ translateY: '-2rem', opacity: 0 }}
+                initial={{ translateY: "-2rem", opacity: 0 }}
                 whileInView={{ translateY: 0, opacity: 1 }}
                 transition={{ duration: 0.2, delay: 0.1 }}
               >
@@ -218,11 +420,11 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
                 >
-                  {t['News']}
+                  {t["News"]}
                 </Link>
               </motion.li>
               <motion.li
-                initial={{ translateY: '-2rem', opacity: 0 }}
+                initial={{ translateY: "-2rem", opacity: 0 }}
                 whileInView={{ translateY: 0, opacity: 1 }}
                 transition={{ duration: 0.2, delay: 0.2 }}
               >
@@ -232,11 +434,11 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
                 >
-                  {t['component.header.about']}
+                  {t["component.header.about"]}
                 </Link>
               </motion.li>
               <motion.li
-                initial={{ translateY: '-2rem', opacity: 0 }}
+                initial={{ translateY: "-2rem", opacity: 0 }}
                 whileInView={{ translateY: 0, opacity: 1 }}
                 transition={{ duration: 0.2, delay: 0.3 }}
               >
@@ -250,7 +452,7 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
                 </Link>
               </motion.li>
               <motion.li
-                initial={{ translateY: '-2rem', opacity: 0 }}
+                initial={{ translateY: "-2rem", opacity: 0 }}
                 whileInView={{ translateY: 0, opacity: 1 }}
                 transition={{ duration: 0.2, delay: 0.4 }}
               >
@@ -269,16 +471,19 @@ export default function Header({ brand, translations: t, locale }: HeaderProps) 
             id="header-footer"
           >
             <motion.div
-              initial={{ translateY: '4rem', opacity: 0 }}
+              initial={{ translateY: "4rem", opacity: 0 }}
               whileInView={{ translateY: 0, opacity: 1 }}
               transition={{ duration: 1, deplay: 3 }}
             >
-              <ContactCtaSection externalTranslations={t} externalLocale={locale} />
+              <ContactCtaSection
+                externalTranslations={t}
+                externalLocale={locale}
+              />
             </motion.div>
           </Container>
           <Footer />
         </div>
       </motion.div>
-    </header >
+    </header>
   );
 }

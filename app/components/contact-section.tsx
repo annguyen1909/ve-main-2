@@ -20,7 +20,7 @@ const ContactSection = forwardRef<HTMLElement>((props, forwardedRef) => {
     headerDom.dataset.variant = "light";
   }, [inView]);
 
-  return <section ref={ref} className="h-dvh max-h-dvh overflow-auto flex py-7 sm:py-14 xl:py-20" {...props}>
+  return <section ref={ref} className="min-h-screen flex py-7 sm:py-14 xl:py-20" {...props}>
     <Container className="flex-none m-auto flex flex-col lg:h-full">
       <div className="text-center my-14" data-koreanable>
         <h3 className="font-semibold text-3xl sm:text-4xl md:text-5xl uppercase text-white mb-2 md:mb-3">{t['component.contact.title']}</h3>

@@ -27,11 +27,11 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
   return (
     <section
-      className="h-dvh max-h-dvh relative bg-black/10"
+      className="min-h-screen relative bg-black/10"
       ref={ref}
       {...props}
     >
-      <video muted playsInline loop ref={videoRef} preload="auto" className={cn("object-cover h-dvh w-full max-h-dvh")}>
+      <video muted playsInline loop ref={videoRef} preload="auto" className={cn("object-cover h-full w-full absolute inset-0")}>
         <source src={banners.find(banner => banner.group === 'we_connect')?.url ?? ''} type="video/mp4" />
       </video>
 

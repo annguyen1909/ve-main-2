@@ -27,11 +27,11 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
   return (
     <section
-      className="h-dvh max-h-dvh relative"
+      className="min-h-screen relative"
       ref={ref}
       {...props}
     >
-      <video muted playsInline ref={videoRef} loop preload="auto" className={cn("object-cover h-dvh w-full max-h-dvh")}>
+      <video muted playsInline ref={videoRef} loop preload="auto" className={cn("object-cover h-full w-full absolute inset-0")}>
         <source src={banners.find(banner => banner.group === 'we_visualize')?.url ?? ''} type="video/mp4" />
       </video>
 

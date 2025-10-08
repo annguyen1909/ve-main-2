@@ -13,11 +13,13 @@ interface NewsSectionProps {
 }
 
 const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedRef) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { newsList: propsNewsList, newsCount, ...domProps } = props;
   const ref = useRef<HTMLElement>(null);
   const { translations: t, locale } = useOutletContext<AppContext>();
   const inView = useInView(ref, { amount: 1 })
 
-  const newsList = Array.isArray(props.newsList) ? props.newsList : [];
+  const newsList = Array.isArray(propsNewsList) ? propsNewsList : [];
 
   useImperativeHandle(forwardedRef, () => ref.current as HTMLElement);
 
@@ -29,7 +31,7 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
     headerDom.dataset.variant = "light";
   }, [inView]);
 
-  return <section ref={ref} className="h-dvh max-h-dvh overflow-auto overscroll-none flex py-7 sm:py-14" {...props}>
+  return <section ref={ref} className="min-h-screen flex py-7 sm:py-14" {...domProps}>
     <Container className="flex-none m-auto min-h-full flex flex-col" variant={"fluid"}>
       <div className="text-center mt-14 mb-2">
         <h3 className="font-semibold text-3xl sm:text-4xl md:text-5xl uppercase text-white mb-2" data-koreanable>{t['New update']}</h3>

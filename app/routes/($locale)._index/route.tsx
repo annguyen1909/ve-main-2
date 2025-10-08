@@ -2,7 +2,8 @@ import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { HeroSection } from "./hero-section";
 import { SummarySection } from "./summary-section";
 import { ServiceSection } from "./service-section";
-import { PageScroller } from "~/components/ui/page-scroller";
+import { SmoothScrollLayout } from "~/components/ui/smooth-scroll-layout";
+import { ScrollProgress } from "~/components/ui/scroll-progress";
 import { cn, title } from "~/lib/utils";
 import type { loader as rootLoader } from "~/root";
 import { useEffect, useState } from "react";
@@ -69,7 +70,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function Index() {
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [currentSection, setCurrentSection] = useState<number>(0);
+  const [totalSections, setTotalSections] = useState<number>(0);
   const { clients, newsList, newsCount } = useLoaderData<typeof loader>();
+
+  const handleIndexChange = (currentIndex: number, totalSections: number) => {
+    setCurrentSection(currentIndex);
+    setTotalSections(totalSections);
+  };
 
   useEffect(() => {
     if (loaded) return;
@@ -121,14 +129,24 @@ export default function Index() {
           <p className="text-white/80 lg:mt-4 text-sm lg:text-xl font-light">preparing for the best...</p>
         </div>
       </div>
-      <PageScroller scrollable={loaded}>
+      
+      {/* Progress Bar - only show when loaded */}
+      {loaded && (
+        <ScrollProgress 
+          currentIndex={currentSection} 
+          totalSections={totalSections}
+          className="z-40"
+        />
+      )}
+      
+      <SmoothScrollLayout onIndexChange={handleIndexChange}>
         <HeroSection ready={loaded} />
         <SummarySection />
         <ServiceSection />
         <NewsSection newsList={newsList} newsCount={newsCount} />
         <ClientSection clients={clients} />
         <ContactSection />
-      </PageScroller>
+      </SmoothScrollLayout>
     </>
   );
 }

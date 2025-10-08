@@ -2,7 +2,6 @@
 import {
   isRouteErrorResponse,
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
@@ -21,12 +20,12 @@ import Header from "./components/header";
 import { Attachment } from "./types/resources";
 import { redirect } from "@remix-run/node";
 import { GlobalProgressIndicator } from "./components/global-progress-indicator";
-import { cn, title } from "./lib/utils";
+import { cn } from "./lib/utils";
 import genericTranslations from "public/locales/en/common.json"
 import i18n from "~/i18n";
 import { useEffect } from "react";
 import { Toaster } from "./components/ui/sonner";
-import { Flame } from "lucide-react";
+
 
 export const links: LinksFunction = () => [
   {
@@ -123,7 +122,7 @@ export default function App() {
   }, []);
 
   return (
-    <html lang={locale} dir={i18n.dir()} className={cn("overscroll-none", locale === 'ko' ? '[&_[data-koreanable]]:font-korean' : '')} translate="no">
+    <html lang={locale} dir={i18n.dir()} className={cn("overscroll-none scroll-smooth", locale === 'ko' ? '[&_[data-koreanable]]:font-korean' : '')} translate="no" style={{ scrollBehavior: 'smooth' }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -141,28 +140,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      import { Meta, Links, Scripts, LiveReload } from "@remix-run/react";
-
-export function meta() {
-  return [
-    { title: "Visual Ennode" ,
-    { name: "description", content: "..." },
-    // ...
-  ];
-}
-
-export default function App() {
-  return (
-    <html lang="en">
-      <head>
       <body
-            /><Outlet />
-            <ScrollRestoration />
-            <Scripts />
-            <LiveReload />
-            
-          </body>
-    
         className={cn(
           scrollable ? "" : "lock-scroll"
         )}
@@ -204,7 +182,7 @@ export function ErrorBoundary() {
   return (
     <>
       <h1>Error!</h1>
-      <p>{error?.message ?? "Unknown error"}</p>
+      <p>{(error as Error)?.message ?? "Unknown error"}</p>
     </>
   );
 }

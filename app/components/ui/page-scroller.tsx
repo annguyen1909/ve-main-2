@@ -1,6 +1,5 @@
 import React, {
   Children,
-  cloneElement,
   createElement,
   isValidElement,
   useCallback,
@@ -9,22 +8,20 @@ import React, {
   useState,
   WheelEventHandler,
 } from "react";
-import { cn } from "~/lib/utils";
-import * as motion from "motion/react-client";
-import { AnimatePresence } from "motion/react";
 
 interface PageScrollerProps {
   children: React.ReactNode;
   scrollable?: boolean;
+  onIndexChange?: (currentIndex: number, totalSections: number) => void;
 }
 
 let wheelTime: number = -1;
 const wheelThrottle = 500;
 
-export function PageScroller({ children, scrollable = true }: PageScrollerProps) {
+export function PageScroller({ children, scrollable = true, onIndexChange }: PageScrollerProps) {
   const scrollContainer = useRef<HTMLDivElement>(null);
   const pageContainer = useRef<HTMLDivElement>(null);
-  let pageCount = Children.count(children);
+  const pageCount = Children.count(children);
   const [scrollableUp, setScrollableUp] = useState<boolean>(false);
   const [scrollableDown, setScrollableDown] = useState<boolean>(true);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
@@ -36,6 +33,13 @@ export function PageScroller({ children, scrollable = true }: PageScrollerProps)
   
   const refs = useRef<Array<HTMLElement>>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  
+  // Notify parent component when index changes
+  useEffect(() => {
+    if (onIndexChange) {
+      onIndexChange(currentIndex, pageCount);
+    }
+  }, [currentIndex, pageCount, onIndexChange]);
   
   useEffect(() => {
     const currentPageRef = refs.current[currentIndex];

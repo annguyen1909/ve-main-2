@@ -26,7 +26,7 @@ const ClientSection = forwardRef<HTMLElement, ClientSectionProps>((props, forwar
     headerDom.dataset.variant = "light";
   }, [inView]);
 
-  return <section ref={ref} className="h-dvh max-h-dvh overflow-auto flex py-7 sm:py-14 lg:py-20" {...props}>
+  return <section ref={ref} className="min-h-screen flex py-7 sm:py-14 lg:py-20" {...props}>
     <Container className="flex-none m-auto min-h-full flex flex-col">
       <div className="text-center mt-14 mb-2">
         <h3 className="font-semibold text-3xl sm:text-4xl md:text-5xl uppercase text-white mb-2 md:mb-3">{t['component.client.title']}</h3>

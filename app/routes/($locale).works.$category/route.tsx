@@ -1,20 +1,29 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Link, Outlet, useLoaderData, useLocation, useOutletContext, useSearchParams } from "@remix-run/react";
+import {
+  useLoaderData,
+  useOutletContext,
+  useSearchParams,
+} from "@remix-run/react";
 import { Container } from "~/components/ui/container";
 import * as motion from "motion/react-client";
-import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from "~/components/ui/icon";
-import { MinusIcon, PlayIcon, PlusIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+} from "~/components/ui/icon";
+import { MinusIcon, PlusIcon } from "lucide-react";
 import { Api } from "~/lib/api";
 import { CategoryResource } from "~/types/categories";
-import { cn, title } from "~/lib/utils";
+import { title } from "~/lib/utils";
 import type { AppContext, loader as rootLoader } from "~/root";
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "~/components/ui/dialog";
-import { WorkResource } from "~/types/works";
-import { BlurFade } from "~/components/ui/blur-fade";
-import { ContactSection } from "~/components/contact-section";
-import { PageScroller } from "~/components/ui/page-scroller";
+import { 
+  groupWorksByProject, 
+  filterWorksByTag, 
+  searchWorks,
+  type OrganizedProject
+} from "~/lib/api-data-processor";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const slug = params.category ?? "";
@@ -27,29 +36,43 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const api = new Api();
 
-  const categories = await api.getCategories(locale).then((response) => response.data.data);
-  const category = categories.find((category: CategoryResource) => category.slug === slug);
+  const categories = await api
+    .getCategories(locale)
+    .then((response) => response.data.data);
+  const category = categories.find(
+    (category: CategoryResource) => category.slug === slug
+  );
 
   if (!category) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const works = await api.getWorks(locale, category.slug, query, tagId).then((response) => response.data.data);
+  const works = await api
+    .getWorks(locale, category.slug, query, tagId)
+    .then((response) => response.data.data);
   const tags = await api.getTags(locale).then((response) => response.data.data);
 
   return {
     locale,
     category,
     works,
-    tags
+    tags,
   };
 }
 
-export const meta: MetaFunction<typeof loader, { "root": typeof rootLoader }> = ({ data, matches }) => {
-  const rootMatch = matches.find((match) => match.id === "root")?.data
-
+export const meta: MetaFunction<typeof loader, { root: typeof rootLoader }> = ({
+  data,
+}) => {
   return [
-    { title: title(data?.locale === 'ko' ? (data.category.slug === 'image' ? '조감도 | 투시도 | 건축CG | 분양CG' : '건축CG영상') : data?.category.title) },
+    {
+      title: title(
+        data?.locale === "ko"
+          ? data.category.slug === "image"
+            ? "조감도 | 투시도 | 건축CG | 분양CG"
+            : "건축CG영상"
+          : data?.category.title
+      ),
+    },
     { name: "description", content: data?.category.description },
   ];
 };
@@ -57,23 +80,56 @@ export const meta: MetaFunction<typeof loader, { "root": typeof rootLoader }> = 
 export default function Works() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { translations: t } = useOutletContext<AppContext>();
-  const { works, category, tags } = useLoaderData<typeof loader>();
-  const [showSearch, setShowSearch] = useState(searchParams.get('q') ?? false);
-  const [currentWork, setCurrentWork] = useState<WorkResource | null>(null);
-  const [currentWorkIndex, setCurrentWorkIndex] = useState<number | null>(null);
-  const [openView, setOpenView] = useState<boolean>(false);
-  const [fullImageLoaded, setFullImageLoaded] = useState<boolean>(false);
+  const { works, tags } = useLoaderData<typeof loader>();
+  const [showSearch, setShowSearch] = useState(searchParams.get("q") ?? false);
+  const [selectedProject, setSelectedProject] =
+    useState<OrganizedProject | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  const [showModal, setShowModal] = useState(false);
 
-  function handeLoadFullImage() {
-    setFullImageLoaded(true);
+  // Process works into organized projects
+  const query = searchParams.get("q") ?? "";
+  const tagId = searchParams.get("tag_id") ?? "";
+
+  let filteredWorks = works.map(work => ({
+    ...work,
+    attachment: undefined,
+  }));
+  if (query) {
+    filteredWorks = searchWorks(filteredWorks, query).map(work => ({
+      ...work,
+      attachment: undefined,
+    }));
+  }
+  if (tagId) {
+    filteredWorks = filterWorksByTag(filteredWorks, tagId).map(work => ({
+      ...work,
+      attachment: undefined,
+    }));
   }
 
-  function handleClickOutsideView(event: React.MouseEvent) {
-    event.preventDefault();
+  const projects = groupWorksByProject(filteredWorks);
 
-    const element = event.target as HTMLElement;
-    if (element && element.classList.contains("overlay")) {
-      setOpenView(false);
+  function handleImageClick(project: OrganizedProject, imageIndex: number = 0) {
+    setSelectedProject(project);
+    setSelectedImageIndex(imageIndex);
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setSelectedProject(null);
+    setSelectedImageIndex(0);
+  }
+
+  function navigateImage(direction: "prev" | "next") {
+    if (!selectedProject) return;
+
+    const totalImages = selectedProject.images.length;
+    if (direction === "prev") {
+      setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : totalImages - 1));
+    } else {
+      setSelectedImageIndex((prev) => (prev < totalImages - 1 ? prev + 1 : 0));
     }
   }
 
@@ -81,181 +137,257 @@ export default function Works() {
     if (!showSearch) {
       setSearchParams(new URLSearchParams());
     }
-  }, [showSearch, setSearchParams])
+  }, [showSearch, setSearchParams]);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeModal();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "auto";
+    };
+  }, [showModal]);
 
   return (
-    // <PageScroller>
-      <section className="min-h-dvh h-auto text-white pt-20">
-        <Container variant={category.slug === 'image' ? "fluid" : "xl"} className="sm:!px-10 mb-4 !py-0 flex flex-col md:flex-row md:items-center gap-5 md:gap-7">
-          <div className="flex items-center gap-5 flex-none">
-            <button className="font-semibold text-lg 2xl:text-xl flex items-center cursor-pointer" onClick={() => setShowSearch(!showSearch)}>{showSearch ? <MinusIcon className="size-5 mr-2" /> : <PlusIcon className="size-5 mr-2" />} {t["Search & Filter"]}</button>
-            <span className="font-light text-sm 2xl:text-base">{works.length} {t["projects"]}</span>
-          </div>
+    <section className="min-h-dvh h-auto text-white pt-20">
+      {/* Search and Filter Header */}
+      <Container
+        variant="fluid"
+        className="sm:!px-10 mt-4 !py-0 flex flex-col md:flex-row md:items-center gap-5 md:gap-7"
+      >
+        <div className="flex items-center gap-5 flex-none">
+          <button
+            className="font-semibold text-lg 2xl:text-xl flex items-center cursor-pointer"
+            onClick={() => setShowSearch(!showSearch)}
+          >
+            {showSearch ? (
+              <MinusIcon className="size-5 mr-2" />
+            ) : (
+              <PlusIcon className="size-5 mr-2" />
+            )}
+            {t["Search & Filter"]}
+          </button>
+          <span className="font-light text-sm 2xl:text-base">
+            {projects.length} {t["projects"]}
+          </span>
+        </div>
 
-          <AnimatePresence>
-            {showSearch ? <motion.div
-              className={cn("flex-none items-center gap-7 flex max-w-full grow")}
-              initial={{ translateX: '-10%', opacity: 0 }}
-              animate={{ translateX: '0%', opacity: 100 }}
-              exit={{ translateX: '-10%', opacity: 0 }}
+        <AnimatePresence>
+          {showSearch ? (
+            <motion.div
+              className="flex-none items-center gap-7 flex max-w-full grow"
+              initial={{ translateX: "-10%", opacity: 0 }}
+              animate={{ translateX: "0%", opacity: 100 }}
+              exit={{ translateX: "-10%", opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
               <div className="flex items-center gap-2 min-w-32 flex-none">
-                <input type="search" className="outline-none bg-transparent border-b border-b-white py-0.5 rounded-none" placeholder={t['Search works...']} defaultValue={searchParams.get('q') ?? ''} data-koreanable onChange={(event) => {
-                  const params = searchParams;
-                  params.set("q", event.target.value.trim());
-                  setSearchParams(params);
-                }} />
+                <input
+                  type="search"
+                  className="outline-none bg-transparent border-b border-b-white py-0.5 rounded-none"
+                  placeholder={t["Search works..."]}
+                  defaultValue={searchParams.get("q") ?? ""}
+                  data-koreanable
+                  onChange={(event) => {
+                    const params = searchParams;
+                    params.set("q", event.target.value.trim());
+                    setSearchParams(params);
+                  }}
+                />
                 <MagnifyingGlassIcon className="-scale-x-100 text-white size-5" />
               </div>
 
-              <div className={cn('flex items-center gap-5 font-extralight overflow-auto max-w-full')}>
-                {tags.map(tag => <button type="button" key={tag.id} onClick={() => {
-                  const params = searchParams;
-                  params.set("tag_id", tag.id);
-                  setSearchParams(params);
-                }}>{tag.name}</button>)}
+              <div className="flex items-center gap-5 font-extralight overflow-auto max-w-full">
+                {tags.map((tag) => (
+                  <button
+                    type="button"
+                    key={tag.id}
+                    onClick={() => {
+                      const params = searchParams;
+                      params.set("tag_id", tag.id);
+                      setSearchParams(params);
+                    }}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
               </div>
-            </motion.div> : null}
-          </AnimatePresence>
-        </Container>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </Container>
 
-        {category.slug === 'image'
-          ? <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1">
-            {works.map((work, i) => (
+      {/* Projects Grid - One image per project */}
+      <Container variant="fluid" className="sm:!px-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2">
+          {projects.map((project) => {
+            const coverImage = project.images[0]; // Use first image as project cover
+
+            return (
               <button
+                key={project.title}
                 type="button"
-                key={i}
-                onClick={() => {
-                  setCurrentWork(work)
-                  setCurrentWorkIndex(i)
-                  setOpenView(true)
-                }}
+                onClick={() => handleImageClick(project, 0)}
+                className="group cursor-pointer"
               >
-                <BlurFade
-                  delay={0.25 + i * 0.05}
-                  offset={10}
-                  direction="up"
-                  className="aspect-[4/3] relative"
-                >
-                  <div className="w-full h-full bg-[#1b1b1b] text-white items-center  justify-center !delay-0 flex p-3">
-                    <h3 className="text-xl 2xl:text-2xl xl:font-medium text-center" data-koreanable>{work.title}</h3>
-                  </div>
+                {/* Project Cover Image */}
+                <div className="aspect-[4/3] relative overflow-hidden group-hover:shadow-2xl group-hover:bg-white/60 transition-all duration-300">
                   <img
-                    src={work.optimize_attachment_url || work.attachment_url}
-                    alt={work.title}
-                    className="absolute inset-0 object-cover w-full h-full hover:opacity-0 duration-100"
+                    src={coverImage.url}
+                    alt={project.title}
+                    className="w-full h-full group-hover:scale-105 group-hover:blur-[1.5px] object-cover transition-transform duration-300"
                     loading="lazy"
                   />
-                </BlurFade>
-              </button>
-            ))}
-          </motion.div>
-          : <Container variant="xl" className="sm:!px-10 mb-4 !py-0 flex flex-col gap-2">
-            {works.map((work, i) =>
-              <div key={i} className="flex items-start gap-4">
-                <div role="presentation" onClick={() => {
-                  setCurrentWork(work)
-                  setCurrentWorkIndex(i)
-                  setOpenView(true)
-                }} className="block grow">
-                  <div className="aspect-video relative flex items-center justify-center">
-                    <div className="w-1/6 aspect-square rounded-full bg-black/20 flex items-center justify-center absolute">
-                      <PlayIcon className="size-1/3 fill-white" />
+
+                  {/* Overlay with project info - only visible on hover */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out">
+                    <div className="absolute bottom-[40%] left-0 right-0 p-4 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                      <h3
+                        className="font-medium text-lg mb-1 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out"
+                        data-koreanable
+                      >
+                        {project.title}
+                      </h3>
                     </div>
-                    <img src={work.optimize_attachment_url || work.attachment_url} alt={work.title} className="object-cover w-full h-full" />
                   </div>
                 </div>
-                <div className="w-96 flex-none hidden md:block" data-koreanable>
-                  <button className="block text-left" onClick={() => {
-                    setCurrentWork(work)
-                    setCurrentWorkIndex(i)
-                    setOpenView(true)
-                  }}>
-                    <h2 className="mb-4 text-xl lg:text-xl 2xl:text-2xl font-medium">{work.title}</h2>
-                  </button>
-                  <p className="text-base lg:text-md 2xl:text-md font-light">{work.description}</p>
-                  {work.link_video ? <p className="text-base lg:text-lg 2xl:text-md font-light">{t['Link']}: <a href={work.link_video} target="_blank" rel="noreferrer" className="link-animation">{work.link_video}</a></p> : null}
+              </button>
+            );
+          })}
+        </div>
+      </Container>
+
+      {/* Simplified Project Modal - Main image with thumbnails below */}
+      <AnimatePresence>
+        {showModal && selectedProject && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                closeModal();
+              }
+            }}
+          >
+            <div className="relative w-full h-full max-w-7xl max-h-full flex flex-col">
+              {/* Close Button */}
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 z-20 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full p-2"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Project Title */}
+              <div className="text-center mb-4 px-4">
+                <h2
+                  className="text-2xl lg:text-3xl font-medium text-white mb-2"
+                  data-koreanable
+                >
+                  {selectedProject.title}
+                </h2>
+                <p className="text-gray-300 text-sm lg:text-base font-light">
+                  {selectedProject.description}
+                </p>
+              </div>
+
+              {/* Main Image Display */}
+              <div className="flex-1 flex items-center justify-center min-h-0 mb-6 relative">
+                {selectedProject.images[selectedImageIndex] && (
+                  <>
+                    <img
+                      src={selectedProject.images[selectedImageIndex].url}
+                      alt={selectedProject.images[selectedImageIndex].title}
+                      className="max-w-full max-h-full object-contain rounded-lg"
+                    />
+
+                  </>
+                )}
+
+                {/* Navigation Arrows */}
+                {selectedProject.images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => navigateImage('prev')}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full p-3"
+                    >
+                      <ChevronLeftIcon className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => navigateImage('next')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full p-3"
+                    >
+                      <ChevronRightIcon className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Thumbnail Strip Below Main Image */}
+              <div className="flex-none px-2 sm:px-4 pb-4">
+                <div className="flex gap-1 sm:gap-2 justify-start sm:justify-center scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 pb-2">
+                  {selectedProject.images.map((image, index) => (
+                    <button
+                      key={image.id}
+                      type="button"
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`flex-none w-16 h-12 sm:w-20 sm:h-16 rounded-md overflow-hidden transition-all duration-200 hover:scale-105 ${
+                        index === selectedImageIndex
+                          ? 'ring-2 ring-white ring-offset-1 sm:ring-offset-2 ring-offset-black'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={image.url}
+                        alt={image.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          // Fallback to attachment_url if optimize_attachment_url fails
+                          const img = e.target as HTMLImageElement;
+                          if (img.src.includes('optimize_attachment_url')) {
+                            const fallbackSrc = image.url.replace(/optimize_attachment_url/g, 'attachment_url');
+                            img.src = fallbackSrc;
+                          }
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Simple Project Info */}
+                <div className="mt-2 sm:mt-4 text-center text-gray-300">
+                  <span className="text-xs sm:text-sm">{selectedProject.images.length} images</span>
                 </div>
               </div>
-            )}
-          </Container>
-        }
-
-        {
-          currentWork && currentWorkIndex !== null ? <Dialog open={openView} onOpenChange={setOpenView}>
-            <DialogContent
-              onClick={handleClickOutsideView}
-              className="overlay outline-none max-w-full p-0 h-[calc(100dvh_-_theme('spacing.32'))] max-h-[calc(100dvh_-_theme('spacing.32'))] flex items-center justify-center bg-transparent border-none rounded-none w-full group custom-close"
-            >
-              <DialogTitle className="hidden h-0">
-                <DialogDescription></DialogDescription>
-              </DialogTitle>
-              <button
-                type="button"
-                className="flex-none text-white absolute left-2 cursor-pointer"
-                onClick={() => {
-                  setCurrentWork(works[currentWorkIndex - 1]);
-                  setCurrentWorkIndex(currentWorkIndex - 1)
-                  setOpenView(true)
-                  setFullImageLoaded(false)
-                  console.log(works[currentWorkIndex - 1])
-                }}
-                disabled={currentWorkIndex === 0}
-              >
-                <ChevronLeftIcon className={cn('size-10 drop-shadow', currentWorkIndex === 0 ? 'opacity-0' : '')} />
-              </button>
-
-              {category.slug === 'image' ? <motion.img
-                key={currentWork.slug}
-                src={fullImageLoaded ? currentWork.attachment_url : (currentWork.optimize_attachment_url ? currentWork.optimize_attachment_url : currentWork.attachment_url)}
-                alt={currentWork.title}
-                className="max-h-full mx-auto"
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                }}
-                fetchpriority="high"
-                onLoad={handeLoadFullImage}
-                exit={{ opacity: 0 }}
-              /> : <motion.video
-                src={currentWork.attachment_url}
-                autoPlay
-                controls
-                playsInline
-                className="max-h-full mx-auto"
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                }}
-                exit={{ opacity: 0 }}
-              />}
-
-              <button
-                type="button"
-                className="flex-none text-white absolute right-2 cursor-pointer"
-                onClick={() => {
-                  setCurrentWork(works[currentWorkIndex + 1]);
-                  setCurrentWorkIndex(currentWorkIndex + 1)
-                  setOpenView(true)
-                  setFullImageLoaded(false)
-                  console.log(works[currentWorkIndex + 1])
-                }}
-                disabled={currentWorkIndex === works.length - 1}
-              >
-                <ChevronRightIcon className={cn("size-10 drop-shadow", currentWorkIndex === works.length - 1 ? "opacity-0" : "")} />
-              </button>
-              <div className="absolute text-white flex-col text-center lg:flex-row -bottom-16 !py-2 flex items-center justify-center gap-1" data-koreanable>
-                <h1 className="text-sm sm:text-base font-semibold">{currentWork.title}</h1>
-                <span className="text-sm sm:text-base font-extralight">{currentWork.description}</span>
-              </div>
-            </DialogContent>
-          </Dialog> : null
-        }
-      </section >
-      /* <ContactSection />
-    </PageScroller> */
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
   );
 }
