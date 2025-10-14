@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance, isAxiosError } from "axios";
 import { Configuration, Resource, ResourceCollection, ResourceCollectionWithPagination } from "~/types/resources";
 import { ClientResource } from "~/types/clients"
 import { WorkResource } from "~/types/works"
@@ -32,6 +32,8 @@ class Api {
         Accept: "application/json",
       },
       withCredentials: true,
+      // set a sensible default timeout so transient network issues fail fast
+      timeout: 10000,
     });
   }
 
@@ -147,12 +149,39 @@ class Api {
     );
   }
 
-  sendEmailContactApi(data: { name: string, email: string, phone: string, company_name: string, discuss: string }, locale: string) {
-    return this.instance.post("/public/mails/send-contact", data, {
-      headers: {
-        "Accept-Language": locale
+  // send contact email with a small retry for transient network errors
+  async sendEmailContactApi(data: { name: string, email: string, phone: string, company_name: string, discuss: string }, locale: string) {
+    const url = "/public/mails/send-contact";
+    const headers = {
+      "Accept-Language": locale,
+    };
+
+    const maxAttempts = 2; // one retry
+    let attempt = 0;
+    let lastErr: unknown = null;
+
+    while (attempt < maxAttempts) {
+      try {
+        return await this.instance.post(url, data, { headers });
+      } catch (err) {
+        lastErr = err;
+        attempt += 1;
+
+        // detect whether it's worth retrying: network error (no response) or 5xx
+  const isAxiosErr = isAxiosError(err);
+  const status = isAxiosErr && (err as AxiosError).response ? (err as AxiosError).response!.status : null;
+
+  const shouldRetry = !isAxiosErr || !(err as AxiosError).response || (status !== null && status >= 500);
+
+        if (!shouldRetry || attempt >= maxAttempts) break;
+
+        // small backoff
+        await new Promise((res) => setTimeout(res, 300 * attempt));
       }
-    });
+    }
+
+    // rethrow the last error so callers can inspect it
+    throw lastErr;
   }
 
   sendEmailCVApi(data: FormData, locale: string) {

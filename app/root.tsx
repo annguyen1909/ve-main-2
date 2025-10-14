@@ -122,7 +122,7 @@ export default function App() {
   }, []);
 
   return (
-    <html lang={locale} dir={i18n.dir()} className={cn("overscroll-none scroll-smooth", locale === 'ko' ? '[&_[data-koreanable]]:font-korean' : '')} translate="no" style={{ scrollBehavior: 'smooth' }}>
+    <html suppressHydrationWarning lang={locale} dir={i18n.dir()} className={cn("overscroll-none scroll-smooth", locale === 'ko' ? '[&_[data-koreanable]]:font-korean' : '')} translate="no" style={{ scrollBehavior: 'smooth' }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -141,6 +141,7 @@ export default function App() {
         <Links />
       </head>
       <body
+        suppressHydrationWarning
         className={cn(
           scrollable ? "" : "lock-scroll"
         )}
