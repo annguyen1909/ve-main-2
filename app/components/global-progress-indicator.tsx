@@ -23,7 +23,8 @@ function GlobalProgressIndicator() {
       role="progressbar"
       aria-hidden={!active}
       aria-valuetext={active ? "Loading" : undefined}
-      className="fixed inset-x-0 top-0 left-0 z-50 h-1 animate-pulse"
+      // hide on small screens, show on md+
+      className="hidden md:block fixed inset-x-0 top-0 left-0 z-50 h-1 animate-pulse"
     >
       <div
         ref={ref}

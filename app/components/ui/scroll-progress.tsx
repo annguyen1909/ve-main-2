@@ -5,11 +5,13 @@ interface ScrollProgressProps {
   currentIndex: number;
   totalSections: number;
   className?: string;
+  labels?: string[];
 }
 
-export function ScrollProgress({ currentIndex, totalSections, className }: ScrollProgressProps) {
+export function ScrollProgress({ currentIndex, totalSections, className, labels }: ScrollProgressProps) {
   return (
-    <div className={cn("fixed right-8 lg:right-12 top-1/2 -translate-y-1/2 z-40", className)}>
+    // hide on small screens, show from md up
+    <div className={cn("hidden md:block fixed right-8 lg:right-12 top-1/2 -translate-y-1/2 z-40", className)}>
       <div className="relative flex flex-col gap-4">
         {/* Progress numbers */}
         {Array.from({ length: totalSections }, (_, index) => (
@@ -49,7 +51,8 @@ export function ScrollProgress({ currentIndex, totalSections, className }: Scrol
                 style={{ transformOrigin: "right center" }}
               />
             )}
-            {(index + 1).toString().padStart(1, '0')}
+            {/** Render provided label if available, otherwise fallback to number */}
+            {labels && labels[index] ? labels[index] : (index + 1).toString().padStart(1, '0')}
           </motion.div>
         ))}
       </div>

@@ -112,7 +112,7 @@ export default function Header({
   return (
     <header
       className={cn(
-        "fixed top-0 w-full h-20 left-0 z-30 group text-white",
+        "fixed top-0 w-full h-20 left-0 z-40 group text-white",
         !collapse
       )}
       id="header"
@@ -326,18 +326,9 @@ export default function Header({
             <motion.div
               initial={{ translateX: "4rem", opacity: 0 }}
               whileInView={{ translateX: 0, opacity: 1 }}
-              transition={{ duration: 1, deplay: 3 }}
+              transition={{ duration: 1, delay: 0.25 }}
               className="flex items-center gap-7 lg:hidden"
             >
-              <div className="flex items-center h-10 relative grow w-auto lg:w-64">
-                <MagnifyingGlassIcon className="size-5 absolute top-2.5 left-4" />
-                <input
-                  type="text"
-                  className="bg-[#484848]/20 rounded-full w-full h-full pl-12 pr-4 !text-white font-light text-lg"
-                  placeholder=""
-                />
-              </div>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div className="flex items-center cursor-pointer gap-2 flex-none uppercase">
@@ -473,7 +464,7 @@ export default function Header({
             <motion.div
               initial={{ translateY: "4rem", opacity: 0 }}
               whileInView={{ translateY: 0, opacity: 1 }}
-              transition={{ duration: 1, deplay: 3 }}
+              transition={{ duration: 1, delay: 3 }}
             >
               <ContactCtaSection
                 externalTranslations={t}

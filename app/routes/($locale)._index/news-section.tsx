@@ -5,21 +5,23 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react"
 import { useInView } from "motion/react"
 import { NewsResource } from "~/types/news"
 import { localePath } from "~/lib/utils"
-import { ChevronsRight } from "lucide-react"
 
 interface NewsSectionProps {
   newsList: Array<NewsResource>,
   newsCount: number
+  imageWidthClass?: string
 }
 
 const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedRef) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { newsList: propsNewsList, newsCount, ...domProps } = props;
+  const { newsList: propsNewsList, newsCount, imageWidthClass, ...domProps } = props;
   const ref = useRef<HTMLElement>(null);
   const { translations: t, locale } = useOutletContext<AppContext>();
   const inView = useInView(ref, { amount: 1 })
 
   const newsList = Array.isArray(propsNewsList) ? propsNewsList : [];
+
+  const getT = (k: string) => (t as unknown as Record<string, string>)[k] ?? k;
 
   useImperativeHandle(forwardedRef, () => ref.current as HTMLElement);
 
@@ -31,33 +33,64 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
     headerDom.dataset.variant = "light";
   }, [inView]);
 
-  return <section ref={ref} className="min-h-screen flex py-7 sm:py-14" {...domProps}>
-    <Container className="flex-none m-auto min-h-full flex flex-col" variant={"fluid"}>
-      <div className="text-center mt-14 mb-2">
-        <h3 className="font-semibold text-3xl sm:text-4xl md:text-5xl uppercase text-white mb-2" data-koreanable>{t['New update']}</h3>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 my-auto">
-        {newsList.map((news, index) => (
-          <Link to={localePath(locale, `news/${news.slug}`)} key={index} className="relative aspect-square">
-            <img className="absolute inset-0 object-cover w-full h-full" src={news.optimize_attachment_url ?? news.attachment_url} alt={news.title} />
-            <div className="relative flex items-end w-full h-full bg-gradient-to-b from-transparent to-[#1b1b1b]">
-              <div className="p-4 xl:p-6">
-                <span className="text-white font-medium text-xs mb-4 xl:mb-6 inline-block">{new Date(news.published_at).toLocaleDateString('vi-VN', {  month: '2-digit', year: 'numeric', day: '2-digit' })}</span>
-                <h4 className="font-semibold text-white text-base sm:text-lg lg:text-base xl:text-xl 2xl:text-2xl line-clamp-4" data-koreanable>{news.title}</h4>
-              </div>
+  return (
+    <section ref={ref} className="min-h-screen flex py-6 sm:py-10 lg:py-12" {...domProps}>
+      <Container className="m-auto w-full" variant={"fluid"}>
+        <div className="max-w-full mx-auto px-4 sm:px-6">
+          <div className="relative mb-6 sm:mb-8 lg:mb-10">
+            {/* watermark behind title */}
+            <div className="absolute left-0 top-0 opacity-5 pointer-events-none hidden sm:block">
+              <img src="/images/ennode-placeholder.webp" alt="" className="w-32 sm:w-40 lg:w-48 h-32 sm:h-40 lg:h-48 object-contain" />
             </div>
-          </Link>
-        ))}
-      </div>
-      
-      {props.newsCount > 4 && (
-        <div className="flex justify-end mt-4">
-          <Link to={localePath(locale, 'news')} className="flex items-center gap-1.5 text-white uppercase text-xl font-thin"><ChevronsRight className="size-8 stroke-1" /> {t['See more']} ({props.newsCount})</Link>
+            <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-4 sm:gap-6">
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
+                  <span className="block">RELATED</span>
+                  <span className="block text-red-500">NEWS</span>
+                </h2>
+                <p className="text-xs sm:text-sm text-white/60 mt-2 sm:mt-3">Latest articles</p>
+              </div>
+              {props.newsCount > 4 && (
+                <Link to={localePath(locale, 'news')} className="text-xs sm:text-sm text-white/70 hover:text-white transition whitespace-nowrap">{t['See more']} ({props.newsCount})</Link>
+              )}
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden">
+            {/* make images wider on large screens: 1 / 2 / 3 columns at sm / lg / xl respectively */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              {newsList.map((news, index) => (
+               <article key={index} className="p-3 sm:p-4 md:p-6 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                 <Link to={localePath(locale, `news/${news.slug}`)} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                  <div
+                    className={`h-48 sm:h-56 md:h-64 lg:h-72 p-1 sm:p-2 overflow-hidden rounded-md mx-auto w-full max-w-[680px] ${imageWidthClass ?? ''}`}
+                  >
+                    <img src={news.optimize_attachment_url ?? news.attachment_url} alt={news.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                   </div>
+
+                   <div className="p-2 sm:p-3 md:p-4">
+                     <time className="text-xs text-white/60 block mb-1 sm:mb-2">{new Date(news.published_at).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric', day: '2-digit' })}</time>
+                     <h4 className="text-white text-base sm:text-lg md:text-xl font-normal line-clamp-2" data-koreanable>{news.title}</h4>
+                   </div>
+                 </Link>
+               </article>
+              ))}
+            </div>
+
+            {/* bottom gradient overlay inside the news grid */}
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-b from-transparent to-[#1b1b1b] pointer-events-none z-10" />
+          </div>
+
+          {/* Go to news button */}
+          <div className="mt-8 sm:mt-10 lg:mt-12 flex justify-center">
+            <Link to={localePath(locale, 'news')} className="px-6 py-2 sm:py-3 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 rounded-full text-white uppercase text-xs sm:text-sm tracking-wide transition-all duration-300">
+              {getT('Go to news')}
+            </Link>
+          </div>
         </div>
-      )}
-    </Container>
-  </section>
+      </Container>
+    </section>
+  )
 });
 
 NewsSection.displayName = "NewsSection";

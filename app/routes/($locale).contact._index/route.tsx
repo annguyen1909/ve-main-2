@@ -150,7 +150,6 @@ export default function Contact() {
   const t = tRaw as unknown as Record<string, string>;
   const emailLabel = t["Email"] ?? "Email";
   const actionData = useActionData<typeof action>();
-  const debugId = (actionData as unknown as { debugId?: string })?.debugId;
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const [success, setSuccess] = useState(false);
@@ -214,23 +213,6 @@ export default function Contact() {
               {t["See us at"]}
             </span>
             <div className="flex items-center gap-6 ml-auto">
-              {debugId ? (
-                <div className="flex items-center gap-3 mr-4">
-                  <div className="text-sm text-[#a8a8a8]">Debug ID</div>
-                  <div className="text-white font-mono text-sm bg-[#222] px-2 py-1 rounded">
-                    {debugId}
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard?.writeText(debugId);
-                      toast.success("Copied debug id");
-                    }}
-                    className="ml-2 text-sm underline"
-                  >
-                    Copy
-                  </button>
-                </div>
-              ) : null}
               <div className="flex items-center gap-2">
                 <Link
                   to="https://instagram.com/visual_ennode"

@@ -7,14 +7,20 @@ import { ScrollProgress } from "~/components/ui/scroll-progress";
 import { cn, title } from "~/lib/utils";
 import type { loader as rootLoader } from "~/root";
 import { useEffect, useState } from "react";
+import { useLoaderData } from "@remix-run/react";
 import { ClientSection } from "~/components/client-section";
+import { CEOSection } from "~/components/ceo-section";
 import { ContactSection } from "~/components/contact-section";
 import { Api } from "~/lib/api";
-import { useLoaderData } from "@remix-run/react";
-import { MorphingText } from "~/components/ui/morphing-text";
+// MorphingText was used previously in the loading overlay but replaced by LoadingCounter
+import LoadingCounter from "~/components/loading-counter";
+import { motion, AnimatePresence } from "framer-motion";
 import { NewsSection } from "./news-section";
+import { WorkProcess } from "./process-section";
 
-export const meta: MetaFunction<unknown, { "root": typeof rootLoader }> = ({ matches }) => {
+export const meta: MetaFunction<unknown, { root: typeof rootLoader }> = ({
+  matches,
+}) => {
   const rootMatch = matches.find((match) => match.id === "root")?.data;
 
   const titleText = title(rootMatch!.translations["home.page.title"], true);
@@ -32,46 +38,54 @@ export const meta: MetaFunction<unknown, { "root": typeof rootLoader }> = ({ mat
     { property: "og:description", content: ogDesc },
     { property: "og:type", content: "website" },
     { property: "og:url", content: "https://www.visualennode.com" },
-    { property: "og:image", content: "https://www.visualennode.com/images/og-cover.jpg" },
+    {
+      property: "og:image",
+      content: "https://www.visualennode.com/images/og-cover.jpg",
+    },
 
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: twitterTitle },
     { name: "twitter:description", content: twitterDesc },
-    { name: "twitter:image", content: "https://www.visualennode.com/images/og-cover.jpg" }
+    {
+      name: "twitter:image",
+      content: "https://www.visualennode.com/images/og-cover.jpg",
+    },
   ];
 };
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const locale = params.locale ?? 'en';
+  const locale = params.locale ?? "en";
 
   const api = new Api();
-  
+
   let newsCount: number = 0;
-  
-  const clients = await api
-    .getClients(locale)
-    .then(async (response) => {
-      return response.data.data;
-    })
-  
+
+  const clients = await api.getClients(locale).then(async (response) => {
+    return response.data.data;
+  });
+
   const newsList = await api
-    .getNewsList(locale, '', 1)
+    .getNewsList(locale, "", 1)
     .then(async (response) => {
       newsCount = response.data.meta.total;
-      return response.data.data.splice(0, 4);
-    })
-  
+      // return all items from the first page (don't truncate here)
+      return response.data.data.splice(0, 6);
+    });
+
   return {
     clients,
     newsList,
-    newsCount
+    newsCount,
   };
 }
 
 export default function Index() {
+
   const [loaded, setLoaded] = useState<boolean>(false);
   const [currentSection, setCurrentSection] = useState<number>(0);
   const [totalSections, setTotalSections] = useState<number>(0);
+  const [videosReady, setVideosReady] = useState<boolean>(false);
+  const [counterDone, setCounterDone] = useState<boolean>(false);
   const { clients, newsList, newsCount } = useLoaderData<typeof loader>();
 
   const handleIndexChange = (currentIndex: number, totalSections: number) => {
@@ -82,69 +96,111 @@ export default function Index() {
   useEffect(() => {
     if (loaded) return;
 
-    const videos = document.querySelectorAll('video');
+    const videos = document.querySelectorAll("video");
     let videoLoadedCount = 0;
     let autoplayVideoCount = 0;
 
-    videos.forEach(video => {
+    videos.forEach((video) => {
       if (video.autoplay) {
         autoplayVideoCount++;
       }
-    })
+    });
 
     function handleLoadedVideo() {
-      videoLoadedCount++
+      videoLoadedCount++;
 
       if (videoLoadedCount === autoplayVideoCount) {
-        setLoaded(true);
+        // If counter already finished, we can show the page immediately.
+        if (counterDone) {
+          setLoaded(true);
+        } else {
+          // Otherwise remember videos are ready and wait for the counter to finish.
+          setVideosReady(true);
+        }
       }
     }
 
     videos.forEach((video) => {
       if (video.autoplay) {
         if (video.readyState >= video.HAVE_FUTURE_DATA) {
-          handleLoadedVideo()
-          return
+          handleLoadedVideo();
+          return;
         }
 
         video.addEventListener("canplaythrough", handleLoadedVideo);
       }
-
-    })
+    });
 
     return () => {
       videos.forEach((video) => {
         if (video.autoplay) {
           video.removeEventListener("canplaythrough", handleLoadedVideo);
         }
-      })
+      });
     };
-  }, [loaded]);
+  }, [loaded, counterDone, videosReady]);
 
   return (
     <>
-      <div className={cn('fixed inset-0 bg-[#1b1b1b] z-50 flex items-center justify-center', loaded ? 'hidden' : '')}>
-        <div className="text-center max-w-screen-md w-full">
-          <MorphingText className="text-white" texts={['We visualize', 'We connect']} />
-          <p className="text-white/80 lg:mt-4 text-sm lg:text-xl font-light">preparing for the best...</p>
-        </div>
-      </div>
-      
+      <AnimatePresence>
+        {!loaded && (
+          <motion.div
+            key="loading-overlay"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{
+              opacity: 0,
+              y: -12,
+              transition: { duration: 0.6, ease: "easeInOut" },
+            }}
+            className={cn(
+              "fixed inset-0 bg-[#1b1b1b] z-50 flex items-center justify-center",
+              loaded ? "hidden" : ""
+            )}
+          >
+            <div className="text-center max-w-screen-md w-full">
+              <LoadingCounter
+                onFinish={() => {
+                  // If videos already ready, finish immediately. Otherwise mark counter done and wait.
+                  if (videosReady) {
+                    setLoaded(true);
+                  } else {
+                    setCounterDone(true);
+                  }
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Progress Bar - only show when loaded */}
       {loaded && (
-        <ScrollProgress 
-          currentIndex={currentSection} 
+        <ScrollProgress
+          currentIndex={currentSection}
           totalSections={totalSections}
           className="z-40"
+          labels={[
+            "Home",
+            "Services",
+            "Works",
+            "Clients",
+            "Process",
+            "News",
+            "CEO",
+            "Contact",
+          ]}
         />
       )}
-      
+
       <SmoothScrollLayout onIndexChange={handleIndexChange}>
         <HeroSection ready={loaded} />
         <SummarySection />
         <ServiceSection />
-        <NewsSection newsList={newsList} newsCount={newsCount} />
         <ClientSection clients={clients} />
+        <WorkProcess />
+        <NewsSection newsList={newsList} newsCount={newsCount} />
+        <CEOSection />
         <ContactSection />
       </SmoothScrollLayout>
     </>
