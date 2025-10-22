@@ -123,7 +123,7 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 4.5 }}
             >
-              We unite diverse diverse departments for seamless collaboration
+              We unite diverse departments for seamless collaboration
             </motion.p>
 
             {/* CTAs on mobile - integrated in the center section */}

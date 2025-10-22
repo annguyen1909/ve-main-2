@@ -34,9 +34,9 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
   }, [inView]);
 
   return (
-    <section ref={ref} className="min-h-screen flex py-6 sm:py-10 lg:py-12" {...domProps}>
+    <section ref={ref} className="min-h-screen flex py-12 md:py-16" {...domProps}>
       <Container className="m-auto w-full" variant={"fluid"}>
-        <div className="max-w-full mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
           <div className="relative mb-6 sm:mb-8 lg:mb-10">
             {/* watermark behind title */}
             <div className="absolute left-0 top-0 opacity-5 pointer-events-none hidden sm:block">
@@ -45,10 +45,10 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
             <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-4 sm:gap-6">
               <div>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
-                  <span className="block">RELATED</span>
-                  <span className="block text-red-500">NEWS</span>
+                  <span className="">RELATED </span>
+                  <span className=" text-red-500">NEWS</span>
                 </h2>
-                <p className="text-xs sm:text-sm text-white/60 mt-2 sm:mt-3">Latest articles</p>
+                <p className="text-base sm:text-lg text-white/60 mt-2 sm:mt-3">Latest articles</p>
               </div>
               {props.newsCount > 4 && (
                 <Link to={localePath(locale, 'news')} className="text-xs sm:text-sm text-white/70 hover:text-white transition whitespace-nowrap">{t['See more']} ({props.newsCount})</Link>
@@ -60,15 +60,15 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
             {/* make images wider on large screens: 1 / 2 / 3 columns at sm / lg / xl respectively */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {newsList.map((news, index) => (
-               <article key={index} className="p-3 sm:p-4 md:p-6 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+               <article key={index} className="rounded-none mb-2 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
                  <Link to={localePath(locale, `news/${news.slug}`)} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
                   <div
-                    className={`h-48 sm:h-56 md:h-64 lg:h-72 p-1 sm:p-2 overflow-hidden rounded-md mx-auto w-full max-w-[680px] ${imageWidthClass ?? ''}`}
+                    className={`overflow-hidden rounded-none mx-auto w-full max-w-full ${imageWidthClass ?? ''} aspect-video`}
                   >
                     <img src={news.optimize_attachment_url ?? news.attachment_url} alt={news.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
                    </div>
 
-                   <div className="p-2 sm:p-3 md:p-4">
+                   <div className="mt-2 sm:mt-3 md:mt-4">
                      <time className="text-xs text-white/60 block mb-1 sm:mb-2">{new Date(news.published_at).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric', day: '2-digit' })}</time>
                      <h4 className="text-white text-base sm:text-lg md:text-xl font-normal line-clamp-2" data-koreanable>{news.title}</h4>
                    </div>
@@ -82,7 +82,7 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
           </div>
 
           {/* Go to news button */}
-          <div className="mt-8 sm:mt-10 lg:mt-12 flex justify-center">
+          <div className="mt-4 sm:mt-5 lg:mt-6 flex justify-center">
             <Link to={localePath(locale, 'news')} className="px-6 py-2 sm:py-3 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 rounded-full text-white uppercase text-xs sm:text-sm tracking-wide transition-all duration-300">
               {getT('Go to news')}
             </Link>

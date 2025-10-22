@@ -46,28 +46,134 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
   // ensure we show at least the first image by default (helps mobile where no hover occurs)
   const visibleIndex = hovered ?? selected ?? 0;
 
+  // touch/swipe support for mobile
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchMoved = useRef(false);
+  const lastTouchX = useRef<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartX.current = t.clientX;
+    touchStartY.current = t.clientY;
+    touchMoved.current = false;
+    lastTouchX.current = null;
+    // debug
+    if (typeof window !== 'undefined') console.debug('[swipe] touchstart', touchStartX.current, touchStartY.current);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current == null || touchStartY.current == null) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartX.current;
+    const dy = t.clientY - touchStartY.current;
+    // if vertical movement is dominant, don't treat as horizontal swipe
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    if (Math.abs(dx) > 10) touchMoved.current = true;
+    lastTouchX.current = t.clientX;
+    if (typeof window !== 'undefined') console.debug('[swipe] touchmove dx', dx, 'dy', dy, 'lastX', lastTouchX.current);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchMoved.current || touchStartX.current == null || lastTouchX.current == null) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchMoved.current = false;
+      return;
+    }
+    const dx = lastTouchX.current - (touchStartX.current ?? 0);
+    const threshold = 30;
+    if (Math.abs(dx) >= threshold) {
+      const len = images.length;
+      if (dx < 0) {
+        // swiped left → next
+        setSelected((prev) => {
+          const current = prev ?? 0;
+          return (current + 1) % len;
+        });
+      } else {
+        // swiped right → prev
+        setSelected((prev) => {
+          const current = prev ?? 0;
+          return (current - 1 + len) % len;
+        });
+      }
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchMoved.current = false;
+    lastTouchX.current = null;
+    if (typeof window !== 'undefined') console.debug('[swipe] touchend dx', dx);
+  };
+
+  const onTouchCancel = () => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchMoved.current = false;
+    lastTouchX.current = null;
+    if (typeof window !== 'undefined') console.debug('[swipe] touchcancel');
+  };
+
+  // Pointer event fallbacks (some browsers support pointer events better)
+  const onPointerDown = (e: React.PointerEvent) => {
+    touchStartX.current = e.clientX;
+    touchStartY.current = e.clientY;
+    touchMoved.current = false;
+    lastTouchX.current = null;
+    if (typeof window !== 'undefined') console.debug('[swipe] pointerdown', e.clientX, e.clientY);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (touchStartX.current == null || touchStartY.current == null) return;
+    const dx = e.clientX - touchStartX.current;
+    const dy = e.clientY - touchStartY.current;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    if (Math.abs(dx) > 10) touchMoved.current = true;
+    lastTouchX.current = e.clientX;
+    if (typeof window !== 'undefined') console.debug('[swipe] pointermove dx', dx, 'dy', dy);
+  };
+
+  const onPointerUp = () => {
+    if (!touchMoved.current || touchStartX.current == null || lastTouchX.current == null) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchMoved.current = false;
+      return;
+    }
+    const dx = lastTouchX.current - (touchStartX.current ?? 0);
+    const threshold = 30;
+    if (Math.abs(dx) >= threshold) {
+      const len = images.length;
+      if (dx < 0) {
+        setSelected((prev) => ((prev ?? 0) + 1) % len);
+      } else {
+        setSelected((prev) => ((prev ?? 0) - 1 + len) % len);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchMoved.current = false;
+    lastTouchX.current = null;
+    if (typeof window !== 'undefined') console.debug('[swipe] pointerup dx', dx);
+  };
+
   return (
     <section
-      className="relative pt-12 md:py-16 px-4 sm:px-6 md:px-12 md:min-h-screen mb-16 md:mb-0"
+      className="relative mt-8 md:mt-0 py-6 md:py-16 md:min-h-screen md:mb-0"
       ref={ref}
       {...props}
     >
-      <div className="relative h-full z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 items-start md:items-center md:min-h-[70vh]">
+  <div className="relative h-full z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 min-w-0">
+        <div className="grid grid-cols-1 md:grid-cols-12 items-start md:items-center md:min-h-[70vh] gap-8 md:gap-12">
           {/* left list (desktop) - hidden on small screens */}
-          <div className="md:col-span-4 col-span-12 h-full px-2 sm:px-6 md:px-8 hidden md:flex md:flex-col justify-between md:self-end md:relative order-2 md:order-1">
-            <div className="md:flex md:justify-start text-center">
-              <h2 
-                className="pl-12 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-white/90"
-                style={{
-                  fontFamily: "'Montserrat', sans-serif",
-                  letterSpacing: '-0.44px',
-                }}
-              >
-                Services
+          <div className="md:col-span-5 col-span-12 h-full hidden md:flex md:flex-col justify-between md:self-end md:relative order-2 md:order-1">
+            <div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
+                SERVICES
               </h2>
             </div>
-            <div className="md:pl-12 space-y-2 md:space-y-4">
+            <div className="space-y-2 md:space-y-4">
               {categories.map((label, i) => (
                 <button
                   key={label}
@@ -140,36 +246,31 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
             </div>
           </div>
 
-          {/* mobile chip grid - show all categories as wrapped pills */}
-          <div className="col-span-12 md:hidden">
-            <div className="flex flex-wrap gap-3 justify-center px-2">
-              {categories.map((label, i) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setSelected(i)}
-                  className={`px-5 py-3 rounded-sm text-sm font-medium transition-colors duration-200 border border-white/6 backdrop-blur-[2px] ${
-                    selected === i
-                      ? "bg-white/12 text-white"
-                      : "bg-transparent text-white/80"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          {/* mobile: category label overlay is shown on the image instead of chips */}
+          <div className="col-span-12 md:hidden" aria-hidden>
+            {/* intentionally empty - label overlay renders inside the image container */}
           </div>
 
           {/* right panel */}
-          <div className="md:col-span-8 col-span-12 md:order-2 order-1 flex items-center justify-center">
-            <div className="w-full max-w-[900px] overflow-hidden relative">
+          <div className="md:col-span-7 col-span-12 md:order-2 order-1 flex items-center justify-center">
+            <div className="w-full max-w-full overflow-hidden relative">
               {/* decorative divider for md screens */}
               <div className="hidden md:block absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6 w-px h-3/4 bg-white/6" />
 
               {/* images */}
-              <div className="relative h-[min(48vh,560px)] md:h-[min(80vh,720px)]">
+              <div
+                className="relative h-[min(48vh,560px)] md:h-[min(80vh,720px)]"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onTouchCancel={onTouchCancel}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                style={{ touchAction: 'pan-y' }}
+              >
                 {/* mobile-only subtle top gradient to add depth on small screens */}
-                <div className="md:hidden absolute inset-x-0 top-0 h-28 pointer-events-none z-20 bg-gradient-to-b from-[#1b1b1b] to-transparent" />
+                <div className="md:hidden absolute inset-x-0 top-0 h-28 pointer-events-none z-20" />
                 {images.map((src, i) => {
                   // compute a parallax offset when the image corresponds to the hovered category
                   const isVisible = visibleIndex === i;
@@ -199,16 +300,90 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
                   );
                 })}
 
-                {/* mobile pagination dots (tap to switch) */}
-                <div className="md:hidden absolute left-0 right-0 bottom-6 flex justify-center gap-2 z-30">
+                {/* announce current category for screen readers */}
+                <span className="sr-only" aria-live="polite">
+                  {categories[visibleIndex] ?? ''}
+                </span>
+
+                {/* mobile: stacked translucent category boxes (left side) */}
+                <div className="md:hidden absolute left-4 top-8 z-40 flex flex-col gap-4 pointer-events-auto">
+                  {categories.map((label, i) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setSelected(i)}
+                      className={`text-left focus:outline-none transition-all duration-300 ease-in-out flex items-center gap-3 px-4 py-3 min-w-[160px] backdrop-blur-sm ${
+                        visibleIndex === i
+                          ? "bg-gradient-to-r from-white/80 to-transparent text-black"
+                          : "bg-gradient-to-r from-white/6 to-transparent text-white/70"
+                      }`}
+                      aria-pressed={visibleIndex === i}
+                    >
+                      <span
+                        className={`block text-[20px] md:text-5xl leading-tight truncate ${
+                          visibleIndex === i
+                            ? "text-black font-bold"
+                            : "text-outline-dark"
+                        }`}
+                        style={{
+                          fontFamily: "'Gilroy', sans-serif",
+                          letterSpacing: "-0.44px",
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* mobile split pill: chevron - label - chevron (centered) */}
+                <div
+                  className="md:hidden absolute left-4 right-4 bottom-10 z-40 flex items-center justify-center"
+                  style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+                >
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    onClick={() => {
+                      const len = images.length;
+                      setSelected((prev) => {
+                        const current = prev ?? 0;
+                        return (current - 1 + len) % len;
+                      });
+                    }}
+                    className="w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    ‹
+                  </button>
+
+                  <div className="mx-3 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm flex items-center gap-3 min-w-[120px] justify-center">
+                    <span className="font-medium truncate">{categories[visibleIndex] ?? ''}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    onClick={() => {
+                      const len = images.length;
+                      setSelected((prev) => {
+                        const current = prev ?? 0;
+                        return (current + 1) % len;
+                      });
+                    }}
+                    className="w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    ›
+                  </button>
+                </div>
+
+                {/* mobile pagination dots (tap to switch) - lowered to avoid overlapping the pill */}
+                <div className="md:hidden absolute left-0 right-0 bottom-3 flex justify-center gap-2 z-30">
                   {images.map((_, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => setSelected(idx)}
-                      aria-label={`Show ${
-                        categories[idx] ?? `image ${idx + 1}`
-                      }`}
+                      aria-label={`Show ${categories[idx] ?? `image ${idx + 1}`}`}
                       className={`w-2.5 h-2.5 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                         visibleIndex === idx ? "bg-white" : "bg-white/30"
                       }`}

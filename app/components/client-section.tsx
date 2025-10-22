@@ -30,12 +30,13 @@ const ClientSection = forwardRef<HTMLElement, ClientSectionProps>(
     return (
       <section
         ref={ref}
-        className="min-h-[80vh] flex py-0 sm:py-8 lg:py-20"
+        className="min-h-[80vh] flex py-0 sm:py-8 lg:pb-20"
         {...props}
       >
         <Container className="flex-none m-auto min-h-full flex flex-col w-full px-4 sm:px-6">
-          <div className="mt-0 sm:mt-12 lg:mt-14 mb-4 sm:mb-6 text-left max-w-5xl">
-            <h3 className="font-semibold text-2xl sm:text-3xl md:text-4xl lg:text-5xl uppercase text-white mb-1 sm:mb-2 md:mb-3 leading-tight">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 lg:mt-14 mb-4 sm:mb-6">
+            <div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight uppercase">
               {/**
                * Render translation with `||` markers used to indicate highlighted segments.
                * Example in common.json: "Our team is dedicated to building ||strong, longlasting relationships|| with our partners." 
@@ -70,11 +71,13 @@ const ClientSection = forwardRef<HTMLElement, ClientSectionProps>(
 
                 return raw;
               })()}
-            </h3>
+            </h2>
+            </div>
           </div>
 
           {/* dark panel wrapper matching design reference */}
-          <div className="w-full max-w-full mx-auto bg-[#1f1f1f] rounded-lg p-4 sm:p-6 md:p-8 lg:p-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12">
+            <div className="w-full bg-[#1f1f1f] rounded-lg p-4 sm:p-6 md:p-8 lg:p-8">
             {clients.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8 md:gap-12 lg:gap-24 items-center justify-items-center">
                 {clients.map((client, index) => (
@@ -94,6 +97,7 @@ const ClientSection = forwardRef<HTMLElement, ClientSectionProps>(
             ) : (
               <p className="text-white">No clients available</p>
             )}
+            </div>
           </div>
         </Container>
       </section>

@@ -115,13 +115,6 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
       ? banners.map((b) => b.url)
       : imgs;
 
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line no-console
-    console.log("service-section using server banners:", useServerBanners);
-    // eslint-disable-next-line no-console
-    console.log("service-section tileImgs resolved:", tileImgs);
-  }
-
   // Debug: allow showing tile URLs when ?showTileUrls=1 is present in the URL (removed unused variable)
 
   // modal state for showing clicked tile
@@ -163,17 +156,9 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Log banners and tile images to the console for debugging
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line no-console
-    console.log("service-section banners:", banners);
-    // eslint-disable-next-line no-console
-    console.log("service-section tileImgs:", tileImgs);
-  }
-
   return (
     <section
-      className="min-h-screen px-2 sm:px-4 lg:px-28 relative bg-[#1b1b1b]"
+      className="min-h-[1000px] md:min-h-[2000px] py-12 md:py-16 relative bg-[#1b1b1b]"
       ref={ref}
       {...props}
       onMouseMove={(e) => {
@@ -195,32 +180,23 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
       }}
     >
       {/* heading */}
-      <div
-        className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 pt-8 sm:pt-12 cursor-pointer"
-        onMouseEnter={() => setHoveredTile(-1)} // Use -1 to indicate heading hover
-        onMouseLeave={() => setHoveredTile(null)}
-      >
-        <h2 className="text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white transition-all duration-300 hover:text-red-500">
-          Selected <span className="text-red-500">works</span>
-          <span className="ml-3 align-middle hidden md:inline-block">
-            <img
-              src="/images/down-right.png"
-              alt=""
-              className="w-10 h-10 inline-block"
-            />
-          </span>
-        </h2>
-        <p className="mt-3 sm:mt-4 max-w-[68rem] text-base sm:text-lg md:text-xl text-white leading-relaxed">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pt-8 sm:pt-12 min-w-0">
+        <div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
+            SELECTED <span className="text-red-500">WORKS</span>
+          </h2>
+          <p className="mt-3 sm:mt-4 max-w-[68rem] text-base sm:text-lg md:text-xl text-white/80 leading-relaxed">
           Explore the impressive portfolio of Our 3D Rendering Company to see
           how VISUAL ENNODE brings architectural visions to life with precision
           and creativity. Dive into our projects to experience the high-quality
           visualizations that set us apart.
         </p>
+        </div>
       </div>
 
       {/* mosaic grid (full-bleed) */}
-      <div className="mt-6 sm:mt-8 md:mt-10 w-full px-0 pb-12 sm:pb-16 md:pb-20">
-        <div className="w-full relative overflow-hidden max-h-screen bg-[#1b1b1b]">
+      <div className="mt-6 sm:mt-8 md:mt-10 w-full px-0">
+        <div className="w-full relative overflow-hidden min-h-[1000px] md:min-h-[2000px] bg-[#1b1b1b]">
           <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px sm:gap-2 lg:gap-px auto-rows-fr">
             {tiles.map((tile, idx) => {
               const url = tileImgs[idx % tileImgs.length];
@@ -339,7 +315,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
           <div
             aria-hidden
-            className="absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-b from-transparent to-[#1b1b1b] pointer-events-none z-40"
+            className="absolute left-0 bottom-0 right-0 md:right-12 lg:right-16 h-[40%] bg-gradient-to-b from-transparent to-[#1b1b1b] pointer-events-none z-10"
           />
         </div>
 
@@ -355,19 +331,19 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
         {/* section-level shadow removed; using a single overlay directly above the grid for reliability */}
       </div>
       {modalUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className={`absolute inset-0 bg-black/70 transition-opacity duration-300 ${
-              modalVisible ? "opacity-100" : "opacity-0"
+              modalVisible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             }`}
             onClick={() => closeModal()}
             aria-hidden
           />
           <div
-            className={`relative max-w-[90vw] max-h-[90vh] w-[min(1100px,90vw)] p-4 transform transition-all duration-300 ease-out ${
+            className={`relative max-w-[min(1100px,90vw)] max-h-[90vh] w-full p-4 transform transition-all duration-300 ease-out ${
               modalVisible
                 ? "opacity-100 scale-100 pointer-events-auto"
-                : "opacity-0 scale-95 "
+                : "opacity-0 scale-95 pointer-events-none"
             }`}
           >
             <button

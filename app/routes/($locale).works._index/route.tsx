@@ -55,7 +55,7 @@ export default function Works() {
     <PageScroller>
       <section className="h-dvh overflow-hidden max-h-dvh grid grid-cols-1 lg:grid-cols-2">
         <div className="relative">
-          {imageCategory?.attachment_url ? <video muted playsInline autoPlay loop preload="auto" className={cn("absolute inset-0 object-cover h-dvh w-full max-h-dvh")}>
+          {imageCategory?.attachment_url ? <video muted playsInline autoPlay loop preload="auto" className={cn("absolute p-6 md:p-0 inset-0 object-cover h-dvh w-full max-h-dvh")}>
             <source src={imageCategory.attachment_url} type="video/mp4" />
           </video> : null}
 
@@ -89,7 +89,7 @@ export default function Works() {
           </motion.div>
         </div>
         <div className="relative">
-          {cinematicCategory?.attachment_url ? <video muted playsInline autoPlay loop preload="auto" className={cn("absolute inset-0 object-cover h-dvh w-full max-h-dvh")}>
+          {cinematicCategory?.attachment_url ? <video muted playsInline autoPlay loop preload="auto" className={cn("absolute p-6 md:p-0 inset-0 object-cover h-dvh w-full max-h-dvh")}>
             <source src={cinematicCategory.attachment_url} type="video/mp4" />
           </video> : null}
 

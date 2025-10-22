@@ -296,5 +296,19 @@ body {
     transition-duration: 400ms;
     transition-timing-function: ease;
   }
+    .text-outline-dark {
+    /* use a CSS variable so stroke width can be overridden per-label */
+    -webkit-text-stroke-width: 0.75px;
+    -webkit-text-stroke-color: black; /* Default outline color */
+    /* Add optional text-fill-color for better cross-browser support */
+    -webkit-text-fill-color: transparent;
+  }
+  /* When the text is inside a hovered group, fill the text smoothly to the group's color */
+  .group:hover .text-outline-dark {
+    -webkit-text-fill-color: currentColor;
+    -webkit-text-stroke-color: currentColor;
+    transition-duration: 400ms;
+    transition-timing-function: ease;
+  }
 }
 

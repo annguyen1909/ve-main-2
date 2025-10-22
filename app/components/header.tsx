@@ -4,7 +4,6 @@ import {
   CrossIcon,
   GlobeIcon,
   HamburgerMenuIcon,
-  MagnifyingGlassIcon,
 } from "./ui/icon";
 import { useEffect, useState } from "react";
 import { cn, localePath } from "~/lib/utils";
@@ -112,17 +111,16 @@ export default function Header({
   return (
     <header
       className={cn(
-        "fixed top-0 w-full h-20 left-0 z-40 group text-white",
+        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-hidden min-w-0",
         !collapse
       )}
       id="header"
     >
       <Container
         variant="fluid"
-        className="flex items-center bg-black/70 h-full relative z-10 py-0 gap-7"
+        className="flex items-center bg-transparent h-full relative z-10 py-0 gap-7 min-w-0"
       >
-        {/* Extended underline across entire header */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-white/20"></div>
+  {/* extended underline removed per design request */}
 
         {/* Mobile Logo - visible on mobile only */}
         <Link
@@ -132,7 +130,7 @@ export default function Header({
           <img
             src={brand.url}
             alt={brand.description}
-            className="w-8 h-6"
+            className="w-8 h-6 max-w-full"
           />
           <h1 className="font-sans font-semibold uppercase tracking-wide text-sm">
             Visual Ennode
@@ -156,7 +154,7 @@ export default function Header({
               src={brand.url}
               alt={brand.description}
               className={cn(
-                "w-8 h-6",
+                "w-8 h-6 max-w-full",
                 !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
               )}
             />
@@ -191,7 +189,11 @@ export default function Header({
             <h1
               className={cn(
                 "font-sans font-semibold uppercase tracking-wide text-sm",
-                !collapse ? "hidden sm:block" : ""
+                /* hide when expanded */
+                !collapse ? "hidden sm:block" : "",
+                /* make the text follow the header variant so it matches the img logo color */
+                /* when header has data-variant=dark the img uses an invert filter; mirror color for text */
+                "group-data-[variant=dark]:invert-[.6]"
               )}
             >
               Visual Ennode
@@ -364,7 +366,7 @@ export default function Header({
         transition={{ duration: 0.5 }}
         whileInView={{ opacity: 1 }}
         className={cn(
-          "fixed inset-0 w-full pt-20 h-dvh max-h-screen bg-[#1B1B1B] @container/header",
+          "fixed inset-0 w-full pt-20 h-dvh max-h-screen bg-[#1B1B1B] @container/header overflow-hidden min-w-0",
           collapse ? "hidden" : "block"
         )}
         style={{ containerType: "size" }}
