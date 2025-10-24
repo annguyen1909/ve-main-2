@@ -9,7 +9,6 @@ import type { loader as rootLoader } from "~/root";
 import { useEffect, useState } from "react";
 import { useLoaderData } from "@remix-run/react";
 import { ClientSection } from "~/components/client-section";
-import { CEOSection } from "~/components/ceo-section";
 import { ContactSection } from "~/components/contact-section";
 import { Api } from "~/lib/api";
 // MorphingText was used previously in the loading overlay but replaced by LoadingCounter
@@ -187,7 +186,6 @@ export default function Index() {
             "Clients",
             "Process",
             "News",
-            "CEO",
             "Contact",
           ]}
         />
@@ -200,7 +198,6 @@ export default function Index() {
         <ClientSection clients={clients} />
         <WorkProcess />
         <NewsSection newsList={newsList} newsCount={newsCount} />
-        <CEOSection />
         <ContactSection />
       </SmoothScrollLayout>
     </>

@@ -1,6 +1,6 @@
 import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { PageScroller } from "~/components/ui/page-scroller";
-import type { AppContext, loader as rootLoader } from "~/root";
+import type { AppContext } from "~/root";
 import { ContactSection } from "~/components/contact-section";
 import { Api } from "~/lib/api";
 import { useLoaderData, useOutletContext } from "@remix-run/react";
@@ -11,7 +11,7 @@ import { generateHTML } from '@tiptap/html'
 import { Image } from '@tiptap/extension-image'
 import StarterKit from '@tiptap/starter-kit'
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export async function loader({ params }: LoaderFunctionArgs) {
   const locale = params.locale ?? "en";
   const slug = params.slug;
   let news: NewsResource;
@@ -46,10 +46,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export default function NewsDetailPage() {
   const { news } = useLoaderData<typeof loader>();
-  const { translations: t, locale } = useOutletContext<AppContext>();
+  useOutletContext<AppContext>();
 
   return (
-    <PageScroller scrollable={true}>
+  <PageScroller scrollable={true} useNativeScroll={true}>
       <section className="h-dvh overflow-auto">
         <div className="w-full h-full max-h-[65%] relative flex items-center justify-center bg-no-repeat bg-top bg-fixed" style={{ backgroundImage: `url(${news.attachment_url})` }}>
           {/* <img src={news.attachment_url} alt={news.title} className="max-h-full max-w-full w-full h-full object-cover absolute inset-0" /> */}

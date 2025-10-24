@@ -1,5 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { useInView } from "motion/react";
+import { useOutletContext } from "@remix-run/react";
+import { AppContext } from "~/root";
 
 interface CEOSectionProps {
   className?: string;
@@ -18,7 +20,9 @@ const CEOSection = forwardRef<HTMLElement, CEOSectionProps>(
       headerDom.dataset.variant = "dark";
     }, [inView]);
 
-    return (
+  const { translations } = useOutletContext<AppContext>();
+
+  return (
         <section
           ref={ref}
           className={`relative lg:max-h-[80svh] flex items-center justify-center bg-[#1b1b1b] ${className}`}
@@ -50,25 +54,20 @@ const CEOSection = forwardRef<HTMLElement, CEOSectionProps>(
                 {/* Name & Title */}
                 <div className="space-y-2">
                   <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                    YOONCHANG CHUNG
+                    {(translations as Record<string,string>)["ceo.name"] ?? "YOONCHANG CHUNG"}
                   </h2>
                   <p className="text-base sm:text-lg md:text-xl text-white/60 tracking-wide">
-                    | CEO | FOUNDER
+                    {(translations as Record<string,string>)["ceo.title"] ?? "| CEO | FOUNDER"}
                   </p>
                 </div>
 
                 {/* Message */}
                 <div className="space-y-4 md:space-y-6 max-w-3xl">
                   <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/80">
-                    Visual Ennode is the crystallization between architectural art and cinema language,
-                    where each frame not only reproduces the space but also tells a story. We do not
-                    merely create images, but also arouse emotions, turn quiet designs into vivid,
-                    attractive movies.
+                    {(translations as Record<string,string>)["ceo.message.1"] ?? "Visual Ennode is the crystallization between architectural art and cinema language, where each frame not only reproduces the space but also tells a story. We do not merely create images, but also arouse emotions, turn quiet designs into vivid, attractive movies."}
                   </p>
                   <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/80">
-                    With the combination of advanced technology and sophisticated art thinking, we
-                    bring a high-class visual experience, helping architects, real estate developers and
-                    brands to convey ideas of the idea.
+                    {(translations as Record<string,string>)["ceo.message.2"] ?? "With the combination of advanced technology and sophisticated art thinking, we bring a high-class visual experience, helping architects, real estate developers and brands to convey ideas of the idea."}
                   </p>
                 </div>
               </div>

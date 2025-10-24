@@ -122,6 +122,16 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
   const [modalVisible, setModalVisible] = useState(false);
   const MODAL_ANIM_MS = 320;
 
+  // computed service title and whether to append the word 'WORKS'
+  const serviceTitleRaw = (t as Record<string, string>)["home.service.title"];
+  const serviceTitle = serviceTitleRaw ?? "SELECTED";
+  const shouldAppendWorks = !serviceTitleRaw || !/work/i.test(serviceTitleRaw);
+  // If the translation already contains the word 'work' or 'works', color that substring red
+  const workMatch = serviceTitleRaw ? serviceTitleRaw.match(/works?|work/i) : null;
+  const titleBefore = workMatch ? serviceTitleRaw!.slice(0, workMatch.index) : serviceTitle;
+  const titleMatch = workMatch ? workMatch[0] : null;
+  const titleAfter = workMatch ? serviceTitleRaw!.slice((workMatch.index || 0) + (titleMatch?.length || 0)) : "";
+
   function openModal(url: string) {
     setModalUrl(url);
     // allow mount then trigger visibility for CSS transition
@@ -158,7 +168,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
   return (
     <section
-      className="min-h-[1000px] md:min-h-[2000px] py-12 md:py-16 relative bg-[#1b1b1b]"
+      className="min-h-[1000px] md:min-h-[1800px] py-12 md:py-16 relative bg-[#1b1b1b]"
       ref={ref}
       {...props}
       onMouseMove={(e) => {
@@ -183,20 +193,32 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
   <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pt-8 sm:pt-12 min-w-0">
         <div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
-            SELECTED <span className="text-red-500">WORKS</span>
+            {serviceTitleRaw ? (
+              workMatch ? (
+                <>
+                  {titleBefore}
+                  <span className="text-red-500">{titleMatch}</span>
+                  {titleAfter}
+                </>
+              ) : (
+                <>{serviceTitle}</>
+              )
+            ) : (
+              <>
+                {serviceTitle}{' '}
+                {shouldAppendWorks ? <span className="text-red-500">WORKS</span> : null}
+              </>
+            )}
           </h2>
           <p className="mt-3 sm:mt-4 max-w-[68rem] text-base sm:text-lg md:text-xl text-white/80 leading-relaxed">
-          Explore the impressive portfolio of Our 3D Rendering Company to see
-          how VISUAL ENNODE brings architectural visions to life with precision
-          and creativity. Dive into our projects to experience the high-quality
-          visualizations that set us apart.
-        </p>
+            {(t as Record<string,string>)["home.service.description"] ?? "Explore the impressive portfolio of Our 3D Rendering Company to see how VISUAL ENNODE brings architectural visions to life with precision and creativity. Dive into our projects to experience the high-quality visualizations that set us apart."}
+          </p>
         </div>
       </div>
 
       {/* mosaic grid (full-bleed) */}
       <div className="mt-6 sm:mt-8 md:mt-10 w-full px-0">
-        <div className="w-full relative overflow-hidden min-h-[1000px] md:min-h-[2000px] bg-[#1b1b1b]">
+        <div className="w-full relative overflow-hidden min-h-[1000px] md:min-h-[1800px] bg-[#1b1b1b]">
           <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px sm:gap-2 lg:gap-px auto-rows-fr">
             {tiles.map((tile, idx) => {
               const url = tileImgs[idx % tileImgs.length];

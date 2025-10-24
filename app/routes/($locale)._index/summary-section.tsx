@@ -11,7 +11,7 @@ import { AppContext } from "~/root";
 
 const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
   const ref = useRef<HTMLElement>(null);
-  useOutletContext<AppContext>();
+  const { translations } = useOutletContext<AppContext>();
   const inView = useInView(ref, { amount: 1 });
 
   useImperativeHandle(forwardedRef, () => ref.current as HTMLElement);
@@ -23,11 +23,11 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
   }, [inView]);
 
   const categories = [
-    "Still Image",
-    "Animation",
-    "Cinematic",
-    "Product",
-    "VFX",
+    (translations as Record<string, string>)["home.categories.still_image"] ?? "Still Image",
+    (translations as Record<string, string>)["home.categories.animation"] ?? "Animation",
+    (translations as Record<string, string>)["home.categories.cinematic"] ?? "Cinematic",
+    (translations as Record<string, string>)["home.categories.product"] ?? "Product",
+    (translations as Record<string, string>)["home.categories.vfx"] ?? "VFX",
   ];
 
   const images = [
@@ -170,7 +170,7 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
           <div className="md:col-span-5 col-span-12 h-full hidden md:flex md:flex-col justify-between md:self-end md:relative order-2 md:order-1">
             <div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
-                SERVICES
+                {(translations as Record<string,string>)["home.summary.services"] ?? "SERVICES"}
               </h2>
             </div>
             <div className="space-y-2 md:space-y-4">

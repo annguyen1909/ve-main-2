@@ -7,15 +7,20 @@ import * as motion from "motion/react-client";
 import { cn, localePath } from "~/lib/utils";
 import { AppContext } from "~/root";
 
-const ANIMATION_DELAY_SECONDS = 1.7;
+// Increased delay so hero entrance waits a bit longer after the loading counter finishes
+const ANIMATION_DELAY_SECONDS = 2.8;
 const CARD_ANIMATION_SECONDS = 0.5;
+// derived delays so a single constant controls sequencing
+const OVERLAY_TRANSITION_DELAY = Math.max(0, ANIMATION_DELAY_SECONDS - 1);
+const HERO_TITLE_DELAY = ANIMATION_DELAY_SECONDS + 1;
+const HERO_SUB_DELAY = ANIMATION_DELAY_SECONDS + 1.5;
 
 interface HeroSectionProps extends React.HTMLAttributes<HTMLDivElement> {
   ready?: boolean;
 }
 
 const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
-  const { brand, locale } = useOutletContext<AppContext>();
+  const { brand, locale, translations } = useOutletContext<AppContext>();
   const [cardAnimationStart, setCardAnimationStart] = useState<boolean>(
     props.ready ?? false
   );
@@ -61,7 +66,7 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
             className="fixed inset-0 flex items-center justify-center z-50 bg-black/30"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 2 }}
+            transition={{ duration: 0.5, delay: OVERLAY_TRANSITION_DELAY }}
             exit={{
               opacity: 0,
               y: -50,
@@ -90,7 +95,7 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
         )}
         ref={videoRef}
       >
-        <source src="videos/hero-video.mp4" type="video/mp4" />
+  <source src="/videos/hero-video.mp4" type="video/mp4" />
       </video>
 
   {/* Overlay: darken video for legibility (stronger on mobile) */}
@@ -100,7 +105,25 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
       <div className="absolute bottom-0 left-0 w-full h-24 sm:h-32 bg-gradient-to-b from-transparent to-[#1b1b1b]"></div>
 
       {/* Main content - responsive layout */}
-      <div className="relative z-30 h-full min-h-screen flex flex-col justify-center sm:justify-between p-4 sm:p-8 lg:p-12">
+      <div className="relative z-30 h-full min-h-screen flex flex-col justify-center sm:justify-between p-4 sm:p-8 lg:py-36 lg:px-20">
+        {/* Decorative blob on the right for large screens (visual anchor) */}
+        <div
+          aria-hidden
+          className="hidden lg:block pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 z-10"
+          style={{ width: 520, height: 520 }}
+        >
+          <svg viewBox="0 0 600 600" className="w-full h-full opacity-30 filter blur-2xl">
+            <defs>
+              <linearGradient id="g1" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#ff4757" stopOpacity="0.18" />
+              </linearGradient>
+            </defs>
+            <g transform="translate(300,300)">
+              <path d="M120,-160C160,-120,180,-60,170,-10C160,40,120,80,80,120C40,160,-10,200,-60,200C-110,200,-160,160,-190,110C-220,60,-230,-10,-200,-60C-170,-110,-110,-150,-50,-180C10,-210,70,-200,120,-160Z" fill="url(#g1)" />
+            </g>
+          </svg>
+        </div>
         {/* Spacer for header - much smaller on mobile */}
         <div className="h-0 sm:h-20 md:h-24"></div>
 
@@ -111,19 +134,27 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white uppercase mb-4 sm:mb-6 lg:mb-8 leading-tight tracking-tight px-4 sm:px-0 sm:ml-12"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 4 }}
+              transition={{ duration: 1, delay: HERO_TITLE_DELAY }}
             >
-              ARCHVIZ
-              <br />
-              STUDIO
+              {(() => {
+                const title = (translations as Record<string, string>)?.["home.hero.title"] ??
+                  "ARCHVIZ\nSTUDIO";
+                return title.split("\n").map((line: string, i: number) => (
+                  <span key={i}>
+                    {line}
+                    <br />
+                  </span>
+                ));
+              })()}
             </motion.h1>
             <motion.p
               className="text-base sm:text-base md:text-lg lg:text-xl text-gray-200 max-w-sm sm:max-w-lg leading-relaxed font-light px-4 sm:px-0 sm:ml-12 mb-8 sm:mb-0"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 4.5 }}
+              transition={{ duration: 1, delay: HERO_SUB_DELAY }}
             >
-              We unite diverse departments for seamless collaboration
+              {(translations as Record<string, string>)?.["home.hero.subtitle"] ??
+                "We unite diverse departments for seamless collaboration"}
             </motion.p>
 
             {/* CTAs on mobile - integrated in the center section */}
@@ -132,16 +163,16 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
                 className="group cursor-pointer touch-manipulation"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 4.5 }}
+                transition={{ duration: 1, delay: HERO_SUB_DELAY }}
               >
                 <p className="text-xs text-gray-300 uppercase tracking-wider mb-1 font-medium">
-                  WE VISUALIZE
+                  {(translations as Record<string, string>)?.["home.hero-section.visual.slogan"] ?? "WE VISUALIZE"}
                 </p>
                 <Link
                   to={localePath(locale, "works")}
                   className="text-lg text-white font-medium inline-flex items-center gap-2 group-hover:gap-3 transition-all duration-300 hover:text-gray-200 active:text-gray-300"
                 >
-                  SEE WORKS <ArrowRight className="size-5" />
+                  {(translations as Record<string, string>)?.["home.hero-section.visual.cta"] ?? "SEE WORKS"} <ArrowRight className="size-5" />
                 </Link>
               </motion.div>
 
@@ -149,16 +180,16 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
                 className="group cursor-pointer touch-manipulation"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 4.5 }}
+                transition={{ duration: 1, delay: HERO_SUB_DELAY }}
               >
                 <p className="text-xs text-gray-300 uppercase tracking-wider mb-1 font-medium">
-                  WE CONNECT
+                  {(translations as Record<string, string>)?.["home.hero-section.ennode.slogan"] ?? "WE CONNECT"}
                 </p>
                 <Link
                   to={localePath(locale, "about")}
                   className="text-lg text-white font-medium inline-flex items-center gap-2 group-hover:gap-3 transition-all duration-300 hover:text-gray-200 active:text-gray-300"
                 >
-                  MORE ABOUT US <ArrowRight className="size-5" />
+                  {(translations as Record<string, string>)?.["home.hero-section.ennode.cta"] ?? "MORE ABOUT US"} <ArrowRight className="size-5" />
                 </Link>
               </motion.div>
             </div>
@@ -176,13 +207,13 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
               transition={{ duration: 1, delay: 4.5 }}
             >
               <p className="text-sm text-gray-300 uppercase tracking-wider mb-3 font-medium">
-                WE VISUALIZE
+                {(translations as Record<string, string>)?.["home.hero-section.visual.slogan"] ?? "WE VISUALIZE"}
               </p>
               <Link
                 to={localePath(locale, "works")}
                 className="text-2xl lg:text-3xl text-white font-medium inline-flex items-center gap-4 group-hover:gap-6 transition-all duration-300 hover:text-gray-200 active:text-gray-300"
               >
-                SEE WORKS <ArrowRight className="size-6" />
+                {(translations as Record<string, string>)?.["home.hero-section.visual.cta"] ?? "SEE WORKS"} <ArrowRight className="size-6" />
               </Link>
             </motion.div>
 
@@ -193,13 +224,13 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
               transition={{ duration: 1, delay: 4.5 }}
             >
               <p className="text-sm text-gray-300 uppercase tracking-wider mb-3 font-medium">
-                WE CONNECT
+                {(translations as Record<string, string>)?.["home.hero-section.ennode.slogan"] ?? "WE CONNECT"}
               </p>
               <Link
                 to={localePath(locale, "about")}
                 className="text-2xl lg:text-3xl text-white font-medium inline-flex items-center gap-4 group-hover:gap-6 transition-all duration-300 hover:text-gray-200 active:text-gray-300"
               >
-                MORE ABOUT US <ArrowRight className="size-6" />
+                {(translations as Record<string, string>)?.["home.hero-section.ennode.cta"] ?? "MORE ABOUT US"} <ArrowRight className="size-6" />
               </Link>
             </motion.div>
           </div>

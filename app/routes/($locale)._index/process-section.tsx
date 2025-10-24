@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { cn } from "~/lib/utils";
 import { useCheckpointObserver } from "~/components/hooks/useCheckpointObserver";
 import { defaultItems, WorkProcessItem } from "~/data/dataWorkProcess";
@@ -20,12 +19,6 @@ export function WorkProcess({
 
   // Map items to a visual left-to-right (top-to-bottom) order based on DOM positions.
   const [orderMap, setOrderMap] = React.useState<number[]>([]);
-
-  // Wait until the background decoration has animated in before showing item animations
-  const [gridRevealed, setGridRevealed] = React.useState<boolean>(false);
-  // Start the grid animation only when the section scrolls into view
-  const [startGridAnimation, setStartGridAnimation] = React.useState<boolean>(false);
-  const sectionRef = React.useRef<HTMLElement | null>(null);
 
   React.useEffect(() => {
     // measure positions after mount/updates
@@ -60,27 +53,6 @@ export function WorkProcess({
     return () => window.removeEventListener("resize", measure);
   }, [itemRefs, items.length]);
 
-  // Observe the section to trigger the background grid animation when it comes into view
-  React.useEffect(() => {
-    const node = sectionRef.current;
-    if (!node) return;
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting && e.intersectionRatio > 0.25) {
-            setStartGridAnimation(true);
-            obs.disconnect();
-          }
-        });
-      },
-      { threshold: [0.25] }
-    );
-
-    obs.observe(node);
-    return () => obs.disconnect();
-  }, [sectionRef]);
-
   // Timing knobs (ms) - tweak these to make the whole sequence slower/faster
   const ROW_ORDER_DELAY = 300; // delay multiplier per ordered item
   const SUBTITLE_STAGGER = 200; // delay between subtitles within an item
@@ -89,30 +61,21 @@ export function WorkProcess({
   // Helper function to get the first word from title
 
   return (
-  <section ref={(el) => (sectionRef.current = el)} className="pt-12 md:py-16 relative mb-12 md:mb-0">
+    <section className="pt-12 md:py-16 relative mb-12 md:mb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-0">
-        {/* Background grid decoration - Fixed position container - hidden on mobile. Animate left->right first. */}
-        {/* GPU-accelerated slide-in: outer wrapper clips, inner element translates */}
-  <div className="hidden lg:block absolute max-w-7xl mx-auto px-4 sm:px-6 md:px-0 left-0 right-0 pointer-events-none overflow-hidden">
-          <motion.img
-            src="/images/grid-deco.svg"
-            alt=""
-            aria-hidden
-            loading="eager"
-            draggable={false}
-            className="w-full h-[21rem] object-contain block"
-            initial={{ x: '-100%', opacity: 0 }}
-            animate={startGridAnimation ? { x: '0%', opacity: 1 } : {}}
-            transition={{ type: 'spring', stiffness: 80, damping: 16, mass: 0.9, duration: 1.5 }}
-            onAnimationComplete={() => setGridRevealed(true)}
-            style={{
-              willChange: 'transform, opacity',
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden',
-              transform: 'translate3d(0,0,0)'
-            }}
-          />
-        </div>
+        {/* Background grid decoration - Fixed position container - hidden on mobile */}
+        <div
+          className="hidden md:block absolute max-w-7xl mt-6 mx-auto px-4 sm:px-6 md:px-12 left-0 right-0 pointer-events-none"
+          style={{
+            background: `url('/images/grid-deco.svg') center/contain no-repeat`,
+
+            height: "21rem",
+            opacity: 1,
+            transition: "none",
+            animation: "none",
+            willChange: "auto",
+          }}
+        />
 
         <div className="relative">
           {/* Title - Always visible */}
@@ -125,12 +88,10 @@ export function WorkProcess({
 
           <div className={cn("w-full max-w-7xl mx-auto", className)} {...props}>
             <div className="relative w-full">
-              {/* Responsive Grid layout: single column on mobile, 2 cols on sm, 4 cols on md, full 22-col grid on lg+ */}
-              <div className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[repeat(22,1fr)] gap-6 sm:gap-8 md:gap-8">
+              {/* Responsive Grid layout: single column on mobile, 2 cols on sm/md, full 22-col grid on lg+ */}
+              <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(22,1fr)] gap-6 sm:gap-8 md:gap-0 pt-0 sm:pt-8 md:pt-12">
                 {items.map((item, index) => {
-                  // Only consider an item visible when both the intersection observer
-                  // reports it and the background grid reveal animation has completed.
-                  const isVisible = Boolean(visibleItems[index] && gridRevealed);
+                  const isVisible = visibleItems[index];
 
                   // Apply column spans only for lg+ screens via Tailwind arbitrary values
                   // Explicit column ranges for large screens (22-column layout)
@@ -152,7 +113,7 @@ export function WorkProcess({
                       className={cn("relative", colSpanClasses[index % 4])}
                     >
                       {/* Content */}
-                      <div className="pt-4 sm:pt-8 md:pt-20">
+                      <div className="pt-4 sm:pt-8 md:pt-[11.5rem]">
                         <h3
                           className={cn(
                             "text-xl sm:text-2xl font-semibold text-white mb-3 sm:mb-2 leading-tight w-full sm:max-w-[200px] md:max-w-[120px]",

@@ -1,5 +1,4 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import i18next from "~/i18next.server";
 import { Link, useLoaderData, useNavigate } from "@remix-run/react";
 
 import {
@@ -9,14 +8,12 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { useEffect, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "~/components/ui/icon";
+import { ChevronLeftIcon, ChevronRightIcon, CrossIcon } from "~/components/ui/icon";
 import * as motion from "motion/react-client";
 import { Api } from "~/lib/api";
 import { title } from "~/lib/utils";
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const t = await i18next.getFixedT(params.locale ?? "en");
-
   const workSlug = params.work ?? "";
   const categorySlug = params.category ?? "";
   const locale = params.locale ?? "en";
@@ -62,6 +59,7 @@ export default function Works() {
 
   const [loaded, setLoaded] = useState<boolean>(!work.optimize_attachment_url);
   const [open, setOpen] = useState<boolean>(true);
+  // dialogRef removed (not required)
 
   function handleClickOutside(event: React.MouseEvent) {
     event.preventDefault();
@@ -85,6 +83,27 @@ export default function Works() {
     }
   }, [open, navigate]);
 
+  // Keyboard navigation: only left/right to navigate
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!open) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const left = document.querySelector<HTMLAnchorElement>(".work-nav-left");
+        if (left) left.click();
+      }
+
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const right = document.querySelector<HTMLAnchorElement>(".work-nav-right");
+        if (right) right.click();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
@@ -94,9 +113,18 @@ export default function Works() {
         <DialogTitle className="hidden h-0">
           <DialogDescription></DialogDescription>
         </DialogTitle>
+
+        {/* In-image close button */}
+        <button
+          aria-label="Close"
+          onClick={() => setOpen(false)}
+          className="absolute right-6 top-6 z-50 bg-black/40 hover:bg-black/60 rounded-full p-2"
+        >
+          <CrossIcon className="w-4 h-4" />
+        </button>
         <Link
           to={{ pathname: `/works/image/work-a` }}
-          className="flex-none text-white absolute left-2 cursor-pointer"
+          className="work-nav-left flex-none text-white absolute left-2 cursor-pointer"
           preventScrollReset
           viewTransition
         >
@@ -112,7 +140,7 @@ export default function Works() {
             opacity: 1,
             x: 0,
           }}
-          fetchpriority="high"
+                fetchPriority="high"
           onLoad={handeLoadImage}
           exit={{ opacity: 0 }}
         /> : <motion.video
@@ -131,7 +159,7 @@ export default function Works() {
 
         <Link
           to={{ pathname: `/works/image/work-b` }}
-          className="flex-none text-white absolute right-2 cursor-pointer"
+          className="work-nav-right flex-none text-white absolute right-2 cursor-pointer"
           preventScrollReset
           viewTransition
         >

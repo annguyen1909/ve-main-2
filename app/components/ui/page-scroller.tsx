@@ -13,12 +13,13 @@ interface PageScrollerProps {
   children: React.ReactNode;
   scrollable?: boolean;
   onIndexChange?: (currentIndex: number, totalSections: number) => void;
+  useNativeScroll?: boolean;
 }
 
 let wheelTime: number = -1;
 const wheelThrottle = 500;
 
-export function PageScroller({ children, scrollable = true, onIndexChange }: PageScrollerProps) {
+export function PageScroller({ children, scrollable = true, onIndexChange, useNativeScroll = true }: PageScrollerProps) {
   const scrollContainer = useRef<HTMLDivElement>(null);
   const pageContainer = useRef<HTMLDivElement>(null);
   const pageCount = Children.count(children);
@@ -329,10 +330,26 @@ export function PageScroller({ children, scrollable = true, onIndexChange }: Pag
     document.body.scrollTo({ top: 0 });
   }, []);
 
+  // If useNativeScroll is requested, render a simple scrollable container and
+  // do not apply the slide/transform behaviour — this avoids the "stuck"
+  // behaviour when the app no longer wants per-slide scrolling.
+  if (useNativeScroll) {
+    return (
+      <div
+        ref={scrollContainer}
+        data-page-scroller="true"
+        className={`w-full ${useNativeScroll ? 'overflow-auto' : 'overflow-hidden'}`}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={scrollContainer}
-      className="w-full h-dvh max-h-dvh overflow-hidden"
+      data-page-scroller="true"
+      className={`w-full h-dvh max-h-dvh ${useNativeScroll ? 'overflow-auto' : 'overflow-hidden'}`}
     >
       {/* <AnimatePresence propagate>
         {isScrolling && (
@@ -347,7 +364,7 @@ export function PageScroller({ children, scrollable = true, onIndexChange }: Pag
 
       <div
         ref={pageContainer}
-        onWheel={wheelScroll}
+        {...(!useNativeScroll ? { onWheel: wheelScroll } : {})}
         className="w-full h-full"
         style={{
           transition: `transform ${500}ms ${"ease-in-out"}`,

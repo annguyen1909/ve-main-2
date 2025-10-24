@@ -45,13 +45,13 @@ const NewsSection = forwardRef<HTMLElement, NewsSectionProps>((props, forwardedR
             <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-4 sm:gap-6">
               <div>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
-                  <span className="">RELATED </span>
-                  <span className=" text-red-500">NEWS</span>
+                  <span className="">{'RELATED'} </span>
+                  <span className=" text-red-500">{(t as Record<string,string>)["News"] ?? 'NEWS'}</span>
                 </h2>
-                <p className="text-base sm:text-lg text-white/60 mt-2 sm:mt-3">Latest articles</p>
+                <p className="text-base sm:text-lg text-white/60 mt-2 sm:mt-3">{(t as Record<string,string>)["New update"] ?? 'Latest articles'}</p>
               </div>
               {props.newsCount > 4 && (
-                <Link to={localePath(locale, 'news')} className="text-xs sm:text-sm text-white/70 hover:text-white transition whitespace-nowrap">{t['See more']} ({props.newsCount})</Link>
+                <Link to={localePath(locale, 'news')} className="text-xs sm:text-sm text-white/70 hover:text-white transition whitespace-nowrap">{(t as Record<string,string>)['See more'] ?? 'See more'} ({props.newsCount})</Link>
               )}
             </div>
           </div>

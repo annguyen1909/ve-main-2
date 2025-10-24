@@ -7,7 +7,6 @@ import { cn, localePath, title } from "~/lib/utils";
 import { AppContext } from "~/root";
 import type { loader as rootLoader } from "~/root";
 import { ContactSection } from "~/components/contact-section";
-import { PageScroller } from "~/components/ui/page-scroller";
 
 const CARD_ANIMATION_SECONDS = 0.5;
 
@@ -52,7 +51,7 @@ export default function Works() {
   const { imageCategory, cinematicCategory } = useLoaderData<typeof loader>()
 
   return (
-    <PageScroller>
+    <>
       <section className="h-dvh overflow-hidden max-h-dvh grid grid-cols-1 lg:grid-cols-2">
         <div className="relative">
           {imageCategory?.attachment_url ? <video muted playsInline autoPlay loop preload="auto" className={cn("absolute p-6 md:p-0 inset-0 object-cover h-dvh w-full max-h-dvh")}>
@@ -124,6 +123,6 @@ export default function Works() {
         </div>
       </section >
       <ContactSection />
-    </PageScroller>
+    </>
   );
 }

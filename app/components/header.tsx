@@ -1,10 +1,6 @@
 import { Attachment } from "~/types/resources";
 import { Container } from "./ui/container";
-import {
-  CrossIcon,
-  GlobeIcon,
-  HamburgerMenuIcon,
-} from "./ui/icon";
+import { CrossIcon, GlobeIcon, HamburgerMenuIcon } from "./ui/icon";
 import { useEffect, useState } from "react";
 import { cn, localePath } from "~/lib/utils";
 import {
@@ -111,7 +107,7 @@ export default function Header({
   return (
     <header
       className={cn(
-        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-hidden min-w-0",
+        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-hidden min-w-0 transition-colors motion-safe:transition-colors duration-300 ease-out hover:bg-black/20 hover:backdrop-blur-sm",
         !collapse
       )}
       id="header"
@@ -120,7 +116,7 @@ export default function Header({
         variant="fluid"
         className="flex items-center bg-transparent h-full relative z-10 py-0 gap-7 min-w-0"
       >
-  {/* extended underline removed per design request */}
+        {/* extended underline removed per design request */}
 
         {/* Mobile Logo - visible on mobile only */}
         <Link
@@ -130,9 +126,9 @@ export default function Header({
           <img
             src={brand.url}
             alt={brand.description}
-            className="w-8 h-6 max-w-full"
+            className="w-8 h-6 max-w-full motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transition-none group-hover:scale-105"
           />
-          <h1 className="font-sans font-semibold uppercase tracking-wide text-sm">
+          <h1 className="font-sans font-semibold uppercase tracking-wide text-sm motion-safe:transition-colors motion-reduce:transition-none group-hover:text-white/90">
             Visual Ennode
           </h1>
         </Link>
@@ -154,7 +150,7 @@ export default function Header({
               src={brand.url}
               alt={brand.description}
               className={cn(
-                "w-8 h-6 max-w-full",
+                "w-8 h-6 max-w-full motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transition-none group-hover:scale-105",
                 !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
               )}
             />
@@ -182,7 +178,7 @@ export default function Header({
               src={brand.url}
               alt={brand.description}
               className={cn(
-                "w-8 h-6",
+                "w-8 h-6 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transition-none group-hover:scale-105",
                 !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
               )}
             />
@@ -248,7 +244,7 @@ export default function Header({
           <Link
             to={localePath(locale, "career")}
             className={cn(
-              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 hover:text-white transition-all duration-300 relative",
               location.pathname.includes("/career")
                 ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
                 : ""
@@ -256,70 +252,39 @@ export default function Header({
           >
             {t["component.header.career"]}
           </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 flex items-center gap-1 relative",
-                  location.pathname.includes("/contact") ||
-                    location.pathname.includes("/ennode")
-                    ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
-                    : ""
-                )}
-              >
-                Start New Project
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+          <Link
+            to={localePath(locale, "contact")}
+            className={cn(
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              location.pathname.includes("/contact")
+                ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
+                : ""
+            )}
+          >
+            {t["component.header.contact"]}
+          </Link>
+          {/* Desktop Language Selector */}
+          <div className="hidden lg:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center cursor-pointer gap-2 flex-none uppercase font-light text-sm tracking-wide hover:opacity-70 transition-opacity relative"
+                  )}
                 >
-                  <polyline points="6,9 12,15 18,9"></polyline>
-                </svg>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="mt-2">
-              <DropdownMenuItem asChild>
-                <Link to={localePath(locale, "contact")}>
-                  {t["component.header.contact"]}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={localePath(locale, "ennode")}>Ennode</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={localePath(locale, "ennode/arc")}>Ennode Arc</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={localePath(locale, "ennode/digital")}>
-                  Ennode Digital
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-            {/* Desktop Language Selector */}
-            <div className="hidden lg:block">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={cn(
-                      "flex items-center cursor-pointer gap-2 flex-none uppercase font-light text-sm tracking-wide hover:opacity-70 transition-opacity relative"
-                    )}
-                  >
-                    <GlobeIcon className="size-5" /> {locale}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32 mt-2">
-                  <DropdownMenuItem onClick={() => switchLocale("en")}>
-                    English
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => switchLocale("ko")}>
-                    Korean
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                  <GlobeIcon className="size-5" /> {locale}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32 mt-2">
+                <DropdownMenuItem onClick={() => switchLocale("en")}>
+                  English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => switchLocale("ko")}>
+                  Korean
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </nav>
 
         {/* Mobile Controls */}

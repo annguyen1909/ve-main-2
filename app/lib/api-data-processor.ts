@@ -9,6 +9,10 @@ export interface OrganizedProjectImage {
   title: string;
   description: string;
   type: ImageType;
+  // mediaType distinguishes between static images and video assets
+  mediaType: 'image' | 'video';
+  // when mediaType === 'video' this contains the playable URL
+  videoUrl: string | null;
   tags: string[];
 }
 
@@ -40,14 +44,38 @@ export function groupWorksByProject(works: WorkResource[]): OrganizedProject[] {
     // Sort works within project (video first, then by type)
     const sortedWorks = sortWorksWithinProject(projectWorks);
 
-    const images = sortedWorks.map(work => ({
-      id: work.slug,
-      url: work.optimize_attachment_url || work.attachment_url,
-      title: work.title,
-      description: work.description,
-      type: detectImageTypeFromWork(work),
-      tags: work.tags.map(tag => tag.name.en)
-    }));
+    const images = sortedWorks.map(work => {
+  // Normalize link_video: some API responses include the string "null" instead of null
+  const linkVideo = (typeof work.link_video === 'string' && work.link_video !== '' && work.link_video !== 'null') ? work.link_video : null;
+
+  // Check both optimized and raw attachment URLs for video file extensions (prefer the raw attachment if it is a video)
+  const optimizeCandidate = String(work.optimize_attachment_url || '');
+  const attachmentCandidate = String(work.attachment_url || '');
+  const isOptimizeVideo = /\.(mp4|webm|m3u8)(\?|$)/i.test(optimizeCandidate);
+  const isAttachmentVideo = /\.(mp4|webm|m3u8)(\?|$)/i.test(attachmentCandidate);
+
+      // Prefer server-hosted attachment video (raw) first, then optimized attachment video, then explicit link_video
+      let resolvedVideoUrl: string | null = null;
+      if (isAttachmentVideo) {
+        resolvedVideoUrl = attachmentCandidate;
+      } else if (isOptimizeVideo) {
+        resolvedVideoUrl = optimizeCandidate;
+      } else if (linkVideo) {
+        resolvedVideoUrl = linkVideo;
+      }
+
+      return {
+        id: work.slug,
+        // use the optimized attachment as the poster/thumbnail
+        url: work.optimize_attachment_url || work.attachment_url,
+        mediaType: (resolvedVideoUrl ? 'video' : 'image') as 'video' | 'image',
+        videoUrl: resolvedVideoUrl ?? null,
+        title: work.title,
+        description: work.description,
+        type: detectImageTypeFromWork(work),
+        tags: work.tags.map(tag => tag.name.en)
+      };
+    });
 
     organizedProjects.push({
       title: projectTitle,

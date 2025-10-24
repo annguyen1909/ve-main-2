@@ -150,9 +150,7 @@ body {
     }
   }
 
-  .lock-scroll {
-    @apply m-0 overflow-hidden h-dvh max-h-dvh;
-  }
+  /* removed .lock-scroll to ensure pages remain scrollable by default */
 
   .link-animation {
     padding-bottom: 0.1rem;
@@ -311,4 +309,35 @@ body {
     transition-timing-function: ease;
   }
 }
+
+/* Global parallax helpers */
+:root {
+  --pointer-x: 0;
+  --pointer-y: 0;
+  --scroll-y: 0;
+}
+
+.global-cursor {
+  transform: translate3d(var(--pointer-x), var(--pointer-y), 0) translate(-50%, -50%);
+  /* remove heavy backdrop-blur and blending used originally to reduce paint cost */
+  border-color: rgba(180,180,180,0.6);
+  background: transparent;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Usage: add .parallax and data-parallax-speed to elements. Speed is a multiplier: positive moves with pointer, negative moves opposite */
+.parallax {
+  /* Use normalized pointer values (-1..1) to compute movement based on viewport size */
+  transform: translate3d(calc(var(--pointer-norm-x) * 50vw * var(--parallax-speed, 0.02)), calc(var(--pointer-norm-y) * 50vh * var(--parallax-speed, 0.02)), 0) translateZ(0);
+}
+
+/* Use data attribute directly in markup to set --parallax-speed inline when needed, e.g. data-parallax-speed="0.04" */
+
+/* Scroll parallax helper: elements that opt-in with data-parallax-scroll will get a translateY applied by the JS code */
+[data-parallax-scroll] {
+  transition: transform 400ms cubic-bezier(.22,1,.36,1);
+  will-change: transform;
+}
+
 

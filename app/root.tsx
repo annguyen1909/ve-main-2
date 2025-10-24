@@ -25,7 +25,7 @@ import genericTranslations from "public/locales/en/common.json"
 import i18n from "~/i18n";
 import { useEffect } from "react";
 import { Toaster } from "./components/ui/sonner";
-
+import GlobalParallax from "./components/global-parallax";
 
 export const links: LinksFunction = () => [
   {
@@ -49,14 +49,19 @@ export const handle = {
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const api = new Api();
   const url = new URL(request.url);
-  const locale = params.locale ?? "en";
-
-  if (!i18n.supportedLngs.includes(locale)) {
-    return redirect(url.toString().replace(locale, ""));
+  // If the incoming URL doesn't contain a locale param (e.g. visiting '/'),
+  // redirect to the fallback locale so the site has explicit language-prefixed URLs
+  const hasLocaleParam = Boolean(params.locale);
+  if (!hasLocaleParam) {
+    const target = `/${i18n.fallbackLng}${url.pathname === "/" ? "" : url.pathname}${url.search}`;
+    return redirect(target);
   }
 
-  if (new RegExp(`.*/${i18n.fallbackLng}/.*`).test(url.toString())) {
-    return redirect(url.toString().replace(locale, ""));
+  const locale = params.locale ?? i18n.fallbackLng;
+
+  // If someone navigates to an unsupported locale, redirect to the fallback
+  if (!i18n.supportedLngs.includes(locale)) {
+    return redirect(`/${i18n.fallbackLng}${url.pathname}${url.search}`);
   }
 
   const t = await i18next.getFixedT(locale);
@@ -91,6 +96,8 @@ export default function App() {
     "routes/($locale).career._index",
     "routes/($locale).contact._index",
     "routes/($locale).about._index",
+    "routes/($locale).news._index",
+    "routes/($locale).news.$slug._index",
   ];
 
   const scrollable = scrollableRouteIds.includes(lastMatch.id);
@@ -137,7 +144,10 @@ export default function App() {
         <meta property="og:site_name" content="Visual Ennode Co., LTD" />
         <meta name="google" content="notranslate" />
         
-        <Meta />
+  <Meta />
+  {/* Alternate language links for SEO */}
+  <link rel="alternate" hrefLang="en" href={`https://visualennode.com/en/`} />
+  <link rel="alternate" hrefLang="ko" href={`https://visualennode.com/ko/`} />
         <Links />
       </head>
       <body
@@ -156,6 +166,7 @@ export default function App() {
             banners,
           }}
         />
+        <GlobalParallax />
         <Toaster richColors position="top-right" icons={{
           error: <svg data-testid="geist-icon" className="size-5" strokeLinejoin="round" viewBox="0 0 16 16" ><path fillRule="evenodd" clipRule="evenodd" d="M8.55846 0.5C9.13413 0.5 9.65902 0.829456 9.90929 1.34788L15.8073 13.5653C16.1279 14.2293 15.6441 15 14.9068 15H1.09316C0.355835 15 -0.127943 14.2293 0.192608 13.5653L6.09065 1.34787C6.34092 0.829454 6.86581 0.5 7.44148 0.5H8.55846ZM8.74997 4.75V5.5V8V8.75H7.24997V8V5.5V4.75H8.74997ZM7.99997 12C8.55226 12 8.99997 11.5523 8.99997 11C8.99997 10.4477 8.55226 10 7.99997 10C7.44769 10 6.99997 10.4477 6.99997 11C6.99997 11.5523 7.44769 12 7.99997 12Z" fill="currentColor"></path></svg>
         }} />

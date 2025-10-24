@@ -8,7 +8,6 @@ import {
 import { ContactSection } from "~/components/contact-section";
 import { Footer } from "~/components/footer";
 import { Container } from "~/components/ui/container";
-import { PageScroller } from "~/components/ui/page-scroller";
 import { AppContext } from "~/root";
 import { ActionFunctionArgs, MetaFunction, json } from "@remix-run/node";
 import { Api } from "~/lib/api";
@@ -280,7 +279,6 @@ export default function Contact() {
 
         {isMobile ? (
           <>
-            <PageScroller>
               <section
                 className="h-dvh max-w-dvh overflow-auto flex"
                 data-koreanable
@@ -640,11 +638,9 @@ export default function Contact() {
                 </Container>
               </section>
               <ContactSection />
-            </PageScroller>
           </>
         ) : (
           <>
-            <PageScroller>
               <section
                 className="h-dvh max-w-dvh overflow-auto flex"
                 data-koreanable
@@ -871,7 +867,6 @@ export default function Contact() {
               </section>
 
               <ContactSection />
-            </PageScroller>
           </>
         )}
         <Footer />
