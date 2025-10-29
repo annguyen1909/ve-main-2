@@ -91,16 +91,16 @@ export default function Index() {
               <Link
                 to={localePath(locale, `news/${news.slug}`)}
                 key={index}
-                className="h-full flex flex-col"
+                className="h-full flex flex-col group"
               >
                 <img
-                  className="aspect-[4/3] w-full object-cover"
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 ease-out transform group-hover:scale-105"
                   src={news.optimize_attachment_url ?? news.attachment_url}
                   alt={news.title}
                 />
                 <div className="grow">
                   <div className="p-2 xl:p-4">
-                    <span className="text-white font-medium text-xs mb-2 xl:mb-4 inline-block">
+                    <span className="text-white font-medium text-xs mb-2 xl:mb-4 inline-block transition-colors duration-200 group-hover:text-white/70">
                       {new Date(news.published_at).toLocaleDateString("vi-VN", {
                         month: "2-digit",
                         year: "numeric",
@@ -108,7 +108,7 @@ export default function Index() {
                       })}
                     </span>
                     <h4
-                      className="font-semibold text-white text-base sm:text-lg lg:text-base xl:text-xl 2xl:text-2xl line-clamp-4"
+                      className="font-semibold text-white text-base sm:text-lg lg:text-base xl:text-xl 2xl:text-2xl line-clamp-4 transition-colors duration-200 group-hover:text-white/70"
                       data-koreanable
                     >
                       {news.title}

@@ -117,7 +117,7 @@ export default function Works() {
 
       const totalImages = selectedProject.images.length;
 
-      // Use embla to animate when available
+      // Prefer embla for smooth animation when available
       if (emblaApi) {
         if (direction === "prev") emblaApi.scrollPrev();
         else emblaApi.scrollNext();
@@ -390,58 +390,67 @@ export default function Works() {
                       });
                     }
                     if (typeof api.scrollTo === "function") {
-                      api.scrollTo(selectedImageIndex || 0, true);
+                      // do not pass `true` (jump) here — let embla animate the initial scroll
+                      api.scrollTo(selectedImageIndex || 0);
                     }
                   }}
                 >
                   <CarouselContent className="h-full">
                     {selectedProject.images.map((img) => (
                       <CarouselItem key={img.id} className="relative w-full h-full flex items-center justify-center">
-                        {img.mediaType === 'video' && img.videoUrl ? (
-                          (/youtube\.com|youtu\.be|vimeo\.com/i).test(img.videoUrl) ? (
-                            <iframe
-                              src={
-                                img.videoUrl.includes('youtu')
-                                  ? img.videoUrl.replace(/watch\?v=/, 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')
-                                  : img.videoUrl.includes('vimeo')
-                                  ? img.videoUrl.replace(/vimeo\.com\//, 'player.vimeo.com/video/')
-                                  : img.videoUrl
-                              }
-                              className="max-w-full max-h-full object-contain rounded-lg"
-                              title={selectedProject.title}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
+                        {/*
+                          Wrap the actual media inside a positioned inline-block container so
+                          the close button can be absolutely positioned relative to the visible
+                          image (not the full slide area which includes carousel gutters).
+                        */}
+                        <div className="relative inline-block max-w-full">
+                          {img.mediaType === 'video' && img.videoUrl ? (
+                            (/youtube\.com|youtu\.be|vimeo\.com/i).test(img.videoUrl) ? (
+                              <iframe
+                                src={
+                                  img.videoUrl.includes('youtu')
+                                    ? img.videoUrl.replace(/watch\?v=/, 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')
+                                    : img.videoUrl.includes('vimeo')
+                                    ? img.videoUrl.replace(/vimeo\.com\//, 'player.vimeo.com/video/')
+                                    : img.videoUrl
+                                }
+                                className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                                title={selectedProject.title}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video
+                                src={img.videoUrl || undefined}
+                                className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                                controls
+                                autoPlay
+                                playsInline
+                                muted
+                              />
+                            )
                           ) : (
-                            <video
-                              src={img.videoUrl || undefined}
-                              className="max-w-full max-h-full object-contain rounded-lg"
-                              controls
-                              autoPlay
-                              playsInline
-                              muted
+                            <img
+                              src={img.url}
+                              alt={img.title}
+                              className="max-w-full max-h-[60vh] object-contain rounded-lg"
                             />
-                          )
-                        ) : (
-                          <img
-                            src={img.url}
-                            alt={img.title}
-                            className="max-w-full max-h-full object-contain rounded-lg"
-                          />
-                        )}
+                          )}
 
-                        <button
-                          onClick={closeModal}
-                          aria-label="Close"
-                          className="absolute left-3 top-3 z-50 text-white transition-colors bg-black/40 hover:bg-black/60 rounded-full p-3 cursor-pointer ring-2 ring-white/20"
-                        >
-                          <CrossIcon className="w-4 h-4" />
-                        </button>
+                          <button
+                            onClick={closeModal}
+                            aria-label="Close"
+                            className="absolute right-3 top-3 z-50 text-white transition-colors bg-black/40 hover:bg-black/60 rounded-full p-3 cursor-pointer ring-2 ring-white/20"
+                          >
+                            <CrossIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
                 </Carousel>
+              </div>
 
                 {/* Navigation Arrows */}
                 {selectedProject.images.length > 1 && (
@@ -460,8 +469,7 @@ export default function Works() {
                     </button>
                   </>
                 )}
-              </div>
-
+              
               {/* Thumbnail Strip Below Main Image */}
               <div className="flex-none px-2 sm:px-4 pb-4">
                 <div className="flex gap-1 sm:gap-2 justify-start sm:justify-center scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 pb-2">
@@ -469,7 +477,14 @@ export default function Works() {
                     <button
                       key={image.id}
                       type="button"
-                      onClick={() => setSelectedImageIndex(index)}
+                      onClick={() => {
+                        if (emblaApi && typeof emblaApi.scrollTo === 'function') {
+                          // pass only the index so embla performs a smooth animated scroll
+                          emblaApi.scrollTo(index);
+                        } else {
+                          setSelectedImageIndex(index);
+                        }
+                      }}
                       className={`flex-none w-16 h-12 sm:w-20 sm:h-16 rounded-md overflow-hidden transition-all duration-200 hover:scale-105 ${
                         index === selectedImageIndex
                           ? 'ring-2 ring-white ring-offset-1 sm:ring-offset-2 ring-offset-black'

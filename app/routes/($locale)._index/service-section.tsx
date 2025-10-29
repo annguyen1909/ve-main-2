@@ -1,7 +1,7 @@
 import { Link, useOutletContext } from "@remix-run/react";
 // import { ArrowRight } from "lucide-react";
 import { useInView } from "motion/react";
-import { motion, useAnimation, Variants } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
 import {
   forwardRef,
   useEffect,
@@ -18,6 +18,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
   const inView = useInView(ref, { amount: 0.25 });
   const controls = useAnimation();
   const [rowIdxMap, setRowIdxMap] = useState<number[]>([]);
+  const [delays, setDelays] = useState<number[]>([]);
   const lottieRefs = useRef<
     Array<null | { play?: () => void; pause?: () => void }>
   >([]);
@@ -32,40 +33,69 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
     headerDom.dataset.variant = "dark";
     // measure tile vertical positions and group into rows, then start animation
     requestAnimationFrame(() => {
-      const container = ref.current as HTMLElement | null;
-      if (!container) {
-        controls.start("visible");
-        return;
-      }
-      const nodes = Array.from(
-        container.querySelectorAll("[data-tile-index]")
-      ) as HTMLElement[];
-      if (!nodes.length) {
-        controls.start("visible");
-        return;
-      }
-
-      const containerTop = container.getBoundingClientRect().top;
-      const tops = nodes.map(
-        (n) =>
-          Math.round((n.getBoundingClientRect().top - containerTop) / 8) * 8
-      );
-
-      const rows: number[] = [];
-      const rowIndexForNode: number[] = new Array(nodes.length).fill(0);
-      const tolerance = 12;
-      tops.forEach((t, i) => {
-        let found = rows.findIndex((rTop) => Math.abs(rTop - t) <= tolerance);
-        if (found === -1) {
-          rows.push(t);
-          found = rows.length - 1;
+        const container = ref.current as HTMLElement | null;
+        if (!container) {
+          controls.start("visible");
+          return;
         }
-        rowIndexForNode[i] = found;
-      });
+        const nodes = Array.from(
+          container.querySelectorAll("[data-tile-index]")
+        ) as HTMLElement[];
+        if (!nodes.length) {
+          controls.start("visible");
+          return;
+        }
 
-      setRowIdxMap(rowIndexForNode);
-      controls.start("visible");
-    });
+        const containerTop = container.getBoundingClientRect().top;
+        // round tops to 8px grid to reduce tiny differences
+        const tops = nodes.map(
+          (n) =>
+            Math.round((n.getBoundingClientRect().top - containerTop) / 8) * 8
+        );
+
+        const tolerance = 12;
+
+        // Build a list of unique row tops then sort them so indices correspond to top-to-bottom order
+        const uniqueTops: number[] = [];
+        tops.forEach((t) => {
+          if (!uniqueTops.some((u) => Math.abs(u - t) <= tolerance)) {
+            uniqueTops.push(t);
+          }
+        });
+        uniqueTops.sort((a, b) => a - b);
+
+        // group node indices by row, and sort nodes in each row by their left position
+        const rows: number[][] = uniqueTops.map(() => []);
+        nodes.forEach((n, i) => {
+          const rowIdx = uniqueTops.findIndex((u) => Math.abs(u - tops[i]) <= tolerance);
+          if (rowIdx >= 0) rows[rowIdx].push(i);
+        });
+        // sort each row by x (left) coordinate so intra-row order is left-to-right
+        rows.forEach((r) =>
+          r.sort((a, b) => {
+            const na = nodes[a].getBoundingClientRect();
+            const nb = nodes[b].getBoundingClientRect();
+            return na.left - nb.left;
+          })
+        );
+
+        const rowIndexForNode: number[] = new Array(nodes.length).fill(0);
+        const computedDelays: number[] = new Array(nodes.length).fill(0);
+        const rowDelay = 0.12; // delay per row
+        const colDelay = 0.03; // delay per column within a row
+
+        rows.forEach((r, rowIdx) => {
+          r.forEach((nodeIdx, posInRow) => {
+            rowIndexForNode[nodeIdx] = rowIdx;
+            computedDelays[nodeIdx] = rowIdx * rowDelay + posInRow * colDelay;
+          });
+        });
+
+        setRowIdxMap(rowIndexForNode);
+        setDelays(computedDelays);
+        // trigger animation start via controls for any other consumers
+        controls.start("visible");
+      });
   }, [inView, controls]);
 
   // create a beautiful masonry-like pattern with varied sizes for visual interest
@@ -227,19 +257,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
                   ? rowIdxMap[idx]
                   : Math.floor(idx / 4);
 
-              const tileVariants: Variants = {
-                hidden: { opacity: 0, scale: 0.9, y: 30 },
-                visible: (row = 0) => ({
-                  opacity: 1,
-                  scale: 1,
-                  y: 0,
-                  transition: {
-                    delay: row * 0.15,
-                    duration: 0.8,
-                    ease: [0.22, 1, 0.36, 1], // custom easing for smooth entry
-                  },
-                }),
-              };
+              
 
               // Calculate parallax offset based on mouse position
               const handleMouseMove = (
@@ -301,10 +319,13 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
                   onBlur={() => lottieRefs.current[idx]?.pause?.()}
                   className={`relative overflow-hidden rounded-none bg-gray-800 block group transition-all duration-300`}
                   style={{ gridRowEnd: `span ${tile.rowSpan}` }}
-                  custom={rowForThis}
-                  initial="hidden"
-                  animate={controls}
-                  variants={tileVariants}
+                  initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                  animate={inView ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.9, y: 30 }}
+                  transition={{
+                    delay: delays[idx] ?? rowForThis * 0.12,
+                    duration: 0.8,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                 >
                   <div
                     className="w-full h-full"

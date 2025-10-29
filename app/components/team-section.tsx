@@ -1,5 +1,5 @@
 import { useOutletContext } from "@remix-run/react";
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, useRef } from "react";
 import { Container } from "~/components/ui/container";
 import { AppContext } from "~/root";
 import {
@@ -10,7 +10,7 @@ import {
   CarouselPrevious,
 } from "~/components/ui/carousel"
 import { EmployeeResource } from "~/types/employees";
-import { Footer } from "./footer";
+// Footer intentionally not used here
 
 interface TeamSectionProps {
   teams: Array<EmployeeResource>;
@@ -21,45 +21,7 @@ const TeamSection = forwardRef<HTMLElement, TeamSectionProps>((props, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  function getContentWidth(element: HTMLElement) {
-    const widthWithPaddings = element.clientWidth;
-    const elementComputedStyle = getElementComputedStyle(element);
-    return (
-      widthWithPaddings -
-      parseFloat(elementComputedStyle.paddingLeft) -
-      parseFloat(elementComputedStyle.paddingRight)
-    );
-  }
-
-  function getElementComputedStyle(element: HTMLElement) {
-    return window.getComputedStyle(element, null);
-  }
-
-  function getScrollBarWidth(document: Document) {
-    const inner = document.createElement('p');
-    inner.style.width = "100%";
-    inner.style.height = "200px";
-
-    const outer = document.createElement('div');
-    outer.style.position = "absolute";
-    outer.style.top = "0px";
-    outer.style.left = "0px";
-    outer.style.visibility = "hidden";
-    outer.style.width = "200px";
-    outer.style.height = "150px";
-    outer.style.overflow = "hidden";
-    outer.appendChild(inner);
-
-    document.body.appendChild(outer);
-    const w1 = inner.offsetWidth;
-    outer.style.overflow = 'scroll';
-    let w2 = inner.offsetWidth;
-    if (w1 == w2) w2 = outer.clientWidth;
-
-    document.body.removeChild(outer);
-
-    return (w1 - w2);
-  }
+  // helper functions for an optional width calculation are intentionally omitted
 
   // useEffect(() => {
   //   function calculateCarouselWidth() {
@@ -107,10 +69,23 @@ const TeamSection = forwardRef<HTMLElement, TeamSectionProps>((props, ref) => {
         </div>
       </Container>
 
-      <Carousel className="w-full transition-[width] text-white duration-500 mt-14 mb-14" ref={carouselRef}>
+      <Carousel
+        className="w-full transition-[width] text-white duration-500 mt-14 mb-14"
+        ref={carouselRef}
+        opts={{
+          // align start so multiple items can be visible and swiped
+          align: "start",
+          containScroll: "trimSnaps",
+          slidesToScroll: 1,
+        }}
+      >
         <CarouselContent className="mx-auto container px-5 bg-[#1b1b1b]">
           {(props.teams ?? []).map((member, index) => {
-            return <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 2xl:basis-1/6">
+            return (
+              <CarouselItem
+                key={index}
+                className="basis-1/2 sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 2xl:basis-1/6"
+              >
               <div className="aspect-[3/4] bg-black/90">
                 <img src={member.attachment_url} alt={member.name} className="object-cover w-full h-full" />
               </div>
@@ -119,6 +94,7 @@ const TeamSection = forwardRef<HTMLElement, TeamSectionProps>((props, ref) => {
                 <p className="font-light">{member.tags[0]}</p>
               </div>
             </CarouselItem>
+            );
           })}
         </CarouselContent>
         <CarouselPrevious />

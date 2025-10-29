@@ -19,7 +19,7 @@ import { Api } from "./lib/api";
 import Header from "./components/header";
 import { Attachment } from "./types/resources";
 import { redirect } from "@remix-run/node";
-import { GlobalProgressIndicator } from "./components/global-progress-indicator";
+// GlobalProgressIndicator removed per request (blue loading bar)
 import { cn } from "./lib/utils";
 import genericTranslations from "public/locales/en/common.json"
 import i18n from "~/i18n";
@@ -156,7 +156,6 @@ export default function App() {
           scrollable ? "" : "lock-scroll"
         )}
       >
-        <GlobalProgressIndicator />
         <Header brand={configuration.brand.data} translations={translations} locale={locale} />
         <Outlet
           context={{

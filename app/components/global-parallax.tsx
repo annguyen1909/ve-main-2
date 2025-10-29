@@ -43,8 +43,8 @@ export default function GlobalParallax() {
 		// keep the cursor from being interactive
 		window.addEventListener("mousemove", onMove, { passive: true });
 
-	const outerEase = 0.1; // outer ring is a bit slower
-	const innerEase = 0.15; // inner dot lags more for a subtle parallax
+	const outerEase = 0.125; // outer ring is a bit slower
+	const innerEase = 0.1625; // inner dot lags more for a subtle parallax
 
 		function loop() {
 			const p = pointer.current;

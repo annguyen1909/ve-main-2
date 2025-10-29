@@ -8,7 +8,7 @@ import { cn, localePath } from "~/lib/utils";
 import { AppContext } from "~/root";
 
 // Increased delay so hero entrance waits a bit longer after the loading counter finishes
-const ANIMATION_DELAY_SECONDS = 2.8;
+const ANIMATION_DELAY_SECONDS = 3.5;
 const CARD_ANIMATION_SECONDS = 0.5;
 // derived delays so a single constant controls sequencing
 const OVERLAY_TRANSITION_DELAY = Math.max(0, ANIMATION_DELAY_SECONDS - 1);

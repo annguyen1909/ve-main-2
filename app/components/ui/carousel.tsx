@@ -4,7 +4,7 @@ import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
-import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react"
+// lucide icons removed from this file because they are not used here
 
 import { cn } from "~/lib/utils"
 import { Button } from "~/components/ui/button"
@@ -184,7 +184,9 @@ const CarouselItem = React.forwardRef<
       role="group"
       aria-roledescription="slide"
       className={cn(
-        "min-w-0 shrink-0 grow-0 basis-full",
+        // make the item a positioned container so absolutely-positioned
+        // children (like a close button) are placed relative to the slide
+        "relative min-w-0 shrink-0 grow-0 basis-full",
         orientation === "horizontal" ? "pl-4" : "pt-4",
         className
       )}

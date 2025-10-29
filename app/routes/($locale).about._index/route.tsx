@@ -8,8 +8,7 @@ import { TeamSection } from "~/components/team-section";
 import { Api } from "~/lib/api";
 import { useLoaderData } from "@remix-run/react";
 import { ContactSection } from "~/components/contact-section";
-import { ProcessSection } from "./process-section";
-import { Footer } from "~/components/footer";
+import { WorkProcess } from "../($locale)._index/process-section";
 
 export const meta: MetaFunction<unknown, { root: typeof rootLoader }> = ({
   matches,
@@ -81,13 +80,17 @@ export default function Index() {
 
   return (
     <>
-      <DefinitionSection />
-      <ValueSection />
-      <TeamSection teams={teams} />
-      <ProcessSection />
-      <ClientSection clients={clients} />
-      <ContactSection />
-      <Footer className="hidden lg:block" />
+        <DefinitionSection />
+
+        <ValueSection />
+
+        <TeamSection teams={teams} />
+
+        <WorkProcess />
+
+        <ClientSection clients={clients} />
+
+        <ContactSection />
     </>
-  );
+  )
 }

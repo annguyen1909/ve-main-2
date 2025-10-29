@@ -107,7 +107,7 @@ export default function Header({
   return (
     <header
       className={cn(
-        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-hidden min-w-0 transition-colors motion-safe:transition-colors duration-300 ease-out hover:bg-black/20 hover:backdrop-blur-sm",
+        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-hidden min-w-0 transition-colors motion-safe:transition-all duration-300 ease-out hover:bg-black/20 hover:backdrop-blur-sm",
         !collapse
       )}
       id="header"
@@ -198,7 +198,7 @@ export default function Header({
           <Link
             to={localePath(locale, "")}
             className={cn(
-              "font-light text-white/50 text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              "font-light text-white/50 text-sm uppercase tracking-wide hover:opacity-70 hover:text-white transition-all duration-300 relative",
               location.pathname === localePath(locale, "") ||
                 location.pathname === `/${locale}` ||
                 location.pathname === `/${locale}/`
@@ -211,7 +211,7 @@ export default function Header({
           <Link
             to={localePath(locale, "works")}
             className={cn(
-              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 hover:text-white transition-all duration-300 relative",
               location.pathname.includes("/works")
                 ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
                 : ""
@@ -222,7 +222,7 @@ export default function Header({
           <Link
             to={localePath(locale, "about")}
             className={cn(
-              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 hover:text-white transition-all duration-300 relative",
               location.pathname.includes("/about")
                 ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
                 : ""
@@ -233,7 +233,7 @@ export default function Header({
           <Link
             to={localePath(locale, "news")}
             className={cn(
-              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 hover:text-white transition-all duration-300 relative",
               location.pathname.includes("/news")
                 ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
                 : ""
@@ -255,7 +255,7 @@ export default function Header({
           <Link
             to={localePath(locale, "contact")}
             className={cn(
-              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 transition-all duration-300 relative",
+              "font-light text-white/50  text-sm uppercase tracking-wide hover:opacity-70 hover:text-white transition-all duration-300 relative",
               location.pathname.includes("/contact")
                 ? "text-white after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-white"
                 : ""
@@ -275,11 +275,30 @@ export default function Header({
                   <GlobeIcon className="size-5" /> {locale}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32 mt-2">
-                <DropdownMenuItem onClick={() => switchLocale("en")}>
+              <DropdownMenuContent
+                align="end"
+                className="w-36 mt-2 bg-[#111111]/60 rounded-none shadow-lg flex flex-col items-center border-none"
+              >
+                <DropdownMenuItem
+                  onClick={() => switchLocale("en")}
+                  className={cn(
+                    "w-full text-center rounded-none text-base justify-center py-2 transition-colors",
+                    locale === "en"
+                      ? "bg-white text-black"
+                      : "text-white/80 hover:bg-white/5"
+                  )}
+                >
                   English
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => switchLocale("ko")}>
+                <DropdownMenuItem
+                  onClick={() => switchLocale("ko")}
+                  className={cn(
+                    "w-full text-center rounded-none text-base justify-center py-2 transition-colors",
+                    locale === "ko"
+                      ? "bg-white text-black"
+                      : "text-white/80 hover:bg-white/5"
+                  )}
+                >
                   Korean
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -298,15 +317,27 @@ export default function Header({
             >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <div className="flex items-center cursor-pointer gap-2 flex-none uppercase">
+                  <div className="flex items-center cursor-pointer rounded-none gap-2 flex-none uppercase">
                     <GlobeIcon className="size-7" /> {locale}
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-14 mt-2">
-                  <DropdownMenuItem onClick={() => switchLocale("en")}>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-44 mt-2 rounded-none bg-[#111111] p-6 shadow-lg flex flex-col items-center gap-6"
+                >
+                  <DropdownMenuItem
+                    onClick={() => switchLocale("en")}
+                    className="w-full text-center text-lg py-3"
+                  >
                     English
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => switchLocale("ko")}>
+                  <DropdownMenuItem
+                    onClick={() => switchLocale("ko")}
+                    className={cn(
+                      "w-full text-center text-xl font-medium py-4",
+                      locale === "ko" ? "bg-white text-black" : "text-white/80"
+                    )}
+                  >
                     Korean
                   </DropdownMenuItem>
                 </DropdownMenuContent>
