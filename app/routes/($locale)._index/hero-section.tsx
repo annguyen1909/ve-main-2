@@ -125,7 +125,17 @@ const HeroSection = forwardRef<HTMLElement, HeroSectionProps>((props, ref) => {
                     "home.hero.title"
                   ] ?? "ARCHVIZ\nSTUDIO";
                 return title.split("\n").map((line: string, i: number) => (
-                  <span key={i}>
+                  <span
+                    key={i}
+                    // Force Montserrat for the English hero title even when the
+                    // page is rendered in Korean. Inline fontFamily ensures the
+                    // correct font is used regardless of parent locale styles.
+                    className="leading-tight"
+                    style={{
+                      fontFamily:
+                        '"Montserrat", "Gilroy", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    }}
+                  >
                     {line}
                     <br />
                   </span>

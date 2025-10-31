@@ -13,7 +13,6 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
   // outlet context is available if needed via useOutletContext
 
   const count = useMotionValue(0);
-  const STORAGE_KEY = "ve:loadingShown";
 
   // loader behavior: animate `count` from 0→100 and call onFinish when done.
 
@@ -26,40 +25,10 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // If we've already shown the loading animation this tab, skip it.
-    try {
-      const alreadyShown = window.sessionStorage.getItem(STORAGE_KEY) === "true";
-      if (alreadyShown) {
-        count.set(100);
-        onFinish?.();
-        return;
-      }
-    } catch (e) {
-      // sessionStorage might be unavailable; fall back to animating normally
-    }
-
-    if (prefersReduced) {
-      // jump directly to finished state
-      count.set(100);
-      try {
-        window.sessionStorage.setItem(STORAGE_KEY, "true");
-      } catch (e) {
-        /* ignore */
-      }
-      onFinish?.();
-      return;
-    }
-
     // animate count from 0 to 100 (slower for a longer load feel)
     const controls = animate(count, 100, { duration: 1.5, ease: "easeOut" });
     const unsubscribe = count.onChange((v) => {
       if (v >= 100) {
-        // finished
-        try {
-          window.sessionStorage.setItem(STORAGE_KEY, "true");
-        } catch (e) {
-          /* ignore */
-        }
         onFinish?.();
         controls.stop();
       }

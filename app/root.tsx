@@ -27,7 +27,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 import GlobalParallax from "./components/global-parallax";
 import LoadingCounter from "./components/loading-counter";
-import { AnimatePresence, motion } from "framer-motion";
+import { /* AnimatePresence, motion */ } from "framer-motion";
  
 
 export const links: LinksFunction = () => [
@@ -139,12 +139,20 @@ export default function App() {
 
   useChangeLanguage(locale);
 
-  // Show a one-time loading overlay for the Korean site across all routes.
-  // This central overlay runs on the client and will hide itself when
-  // the `LoadingCounter` signals onFinish. We initialize visible only for
-  // Korean locale so it doesn't affect other languages (which may render
-  // their own page-level loaders).
-  const [overlayVisible, setOverlayVisible] = useState<boolean>(locale === "ko");
+    // Show a one-time loading overlay for the Korean site across all routes.
+    // This central overlay runs on the client and will hide itself when
+    // the `LoadingCounter` signals onFinish. We initialize visible only for
+    // Korean locale so it doesn't affect other languages (which may render
+    // their own page-level loaders).
+    const [overlayVisible, setOverlayVisible] = useState<boolean>(locale === "ko");
+
+  useEffect(() => {
+
+
+
+      // run only once on client mount
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [locale]);
 
   useEffect(() => {
     if (!document) return;
@@ -200,21 +208,11 @@ export default function App() {
       >
         <Header brand={configuration.brand.data} translations={translations} locale={locale} />
 
-        <AnimatePresence>
-          {overlayVisible && (
-            <motion.div
-              key="root-loading-overlay"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -12, transition: { duration: 0.6, ease: "easeInOut" } }}
-              className="fixed inset-0 bg-[#1b1b1b] z-50 flex items-center justify-center"
-            >
-              <div className="text-center max-w-screen-md w-full">
-                <LoadingCounter onFinish={() => setOverlayVisible(false)} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {overlayVisible && (
+          <div className="text-center max-w-screen-md w-full mx-auto my-8">
+            <LoadingCounter onFinish={() => setOverlayVisible(false)} />
+          </div>
+        )}
 
         <Outlet
           context={{

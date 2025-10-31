@@ -1,5 +1,4 @@
 import { Link, useOutletContext } from "@remix-run/react";
-import { ChevronsRight } from "lucide-react";
 import { localePath } from "~/lib/utils";
 import { AppContext } from "~/root";
 
@@ -21,15 +20,11 @@ export function ContactCtaSection(props: {
         <div className="font-extralight text-sm sm:text-base leading-7">
           <p data-koreanable>{t["component.contact.column_1.body"]}</p>
           <p className="mt-2">
-            <span data-koreanable>{t["Contact"]}</span>: contact@visualennode.com
-          </p>
-          <p className="mt-2">
             <span data-koreanable>{t["HR manager"]}</span>: jobs@visualennode.com
           </p>
-
           <div className="mt-2 flex items-center gap-5">
             <p>
-              <span data-koreanable>{t["Phone"]}</span>: 010 30702402
+              <span data-koreanable>{t["Phone"]}</span>: 02-515-7400
             </p>
 
             <div className="flex items-center gap-2 ml-auto">
@@ -95,14 +90,6 @@ export function ContactCtaSection(props: {
               </Link>
             </div>
           </div>
-
-          <Link
-            to={localePath(locale, "contact")}
-            className="text-lg md:text-xl mt-5 flex items-center gap-2 font-semibold"
-          >
-            <span data-koreanable>{t["Fill out form"]}</span>{" "}
-            <ChevronsRight className="size-7 md:size-10" />
-          </Link>
         </div>
       </div>
       <div className="grow lg:w-1/2 flex flex-col">

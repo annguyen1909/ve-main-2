@@ -26,7 +26,7 @@ class Api {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: process.env.BASE_API_URL ?? 'http://bach9087.cafe24.com:8000',
+      baseURL: process.env.BASE_API_URL ?? 'https://api.visualennode.com',
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
