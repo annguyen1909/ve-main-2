@@ -16,8 +16,10 @@ async function hydrate() {
     .use(Backend) // Setup your backend
     .init({
       ...i18n, // spread the configuration
-      // This function detects the namespaces your routes rendered while SSR use
-      ns: "common",
+      // Detect which namespaces the server rendered and request them on the
+      // client so route-level translations are available during navigation.
+      // `getInitialNamespaces()` returns the namespace list used during SSR.
+      ns: getInitialNamespaces(),
       backend: { loadPath: "/locales/{{lng}}/{{ns}}.json" },
       detection: {
         // Here only enable htmlTag detection, we'll detect the language only
