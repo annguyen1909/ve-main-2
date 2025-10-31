@@ -7,7 +7,7 @@ import { ScrollProgress } from "~/components/ui/scroll-progress";
 import { cn, title } from "~/lib/utils";
 import type { loader as rootLoader } from "~/root";
 import { useEffect, useState } from "react";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useOutletContext } from "@remix-run/react";
 import { ClientSection } from "~/components/client-section";
 import { ContactSection } from "~/components/contact-section";
 import { Api } from "~/lib/api";
@@ -16,6 +16,9 @@ import LoadingCounter from "~/components/loading-counter";
 import { motion, AnimatePresence } from "framer-motion";
 import { NewsSection } from "./news-section";
 import { WorkProcess } from "./process-section";
+import { itemsForLocale } from "~/data/dataWorkProcess";
+import { AppContext } from "~/root";
+import type { WorkProcessItem } from "~/data/dataWorkProcess";
 
 export const meta: MetaFunction<unknown, { root: typeof rootLoader }> = ({
   matches,
@@ -86,6 +89,11 @@ export default function Index() {
   const [videosReady, setVideosReady] = useState<boolean>(false);
   const [counterDone, setCounterDone] = useState<boolean>(false);
   const { clients, newsList, newsCount } = useLoaderData<typeof loader>();
+  const { translations, locale } = useOutletContext<AppContext>();
+  let processItems = ((translations as unknown) as Record<string, unknown>)[
+    "about.process.steps"
+  ] as WorkProcessItem[] | undefined;
+  if (!processItems) processItems = itemsForLocale(locale);
 
   const handleIndexChange = (currentIndex: number, totalSections: number) => {
     setCurrentSection(currentIndex);
@@ -142,7 +150,7 @@ export default function Index() {
   return (
     <>
       <AnimatePresence>
-        {!loaded && (
+        {!loaded && (locale !== "ko") && (
           <motion.div
             key="loading-overlay"
             initial={{ opacity: 1 }}
@@ -191,15 +199,18 @@ export default function Index() {
         />
       )}
 
-      <SmoothScrollLayout onIndexChange={handleIndexChange}>
-        <HeroSection ready={loaded} />
-        <SummarySection />
-        <ServiceSection />
-        <ClientSection clients={clients} />
-        <WorkProcess />
-        <NewsSection newsList={newsList} newsCount={newsCount} />
-        <ContactSection />
-      </SmoothScrollLayout>
+      <div className={locale === "ko" ? "ko-solid" : ""}>
+        <SmoothScrollLayout onIndexChange={handleIndexChange}>
+          <HeroSection ready={loaded} />
+          <SummarySection />
+          <ServiceSection />
+          <ClientSection clients={clients} />
+          {/* pass translated steps if available */}
+          <WorkProcess items={processItems} />
+          <NewsSection newsList={newsList} newsCount={newsCount} />
+          <ContactSection />
+        </SmoothScrollLayout>
+      </div>
     </>
   );
 }

@@ -1,6 +1,5 @@
 import { Link, MetaFunction, useOutletContext } from "@remix-run/react"
 import { ArrowRight } from "lucide-react";
-import { Footer } from "~/components/footer";
 import { Container } from "~/components/ui/container";
 import { cn, localePath, title } from "~/lib/utils";
 import { AppContext } from "~/root"
@@ -46,6 +45,5 @@ export default function Ennode() {
         </div>
       </Container>
     </div>
-    <Footer />
   </section >
 }

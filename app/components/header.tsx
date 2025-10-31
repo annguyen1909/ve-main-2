@@ -1,7 +1,7 @@
 import { Attachment } from "~/types/resources";
 import { Container } from "./ui/container";
 import { CrossIcon, GlobeIcon, HamburgerMenuIcon } from "./ui/icon";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn, localePath } from "~/lib/utils";
 import {
   Link,
@@ -9,8 +9,8 @@ import {
   useNavigate,
   useNavigation,
 } from "@remix-run/react";
-import { Footer } from "./footer";
 import * as motion from "motion/react-client";
+import { AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,12 +32,17 @@ export default function Header({
   locale,
 }: HeaderProps) {
   const [collapse, setCollapse] = useState<boolean>(true);
+  const [closing, setClosing] = useState<boolean>(false);
   const navigation = useNavigation();
   const [lastHeaderVariant, setLastHeaderVariant] = useState<
     string | undefined
   >();
   const navigate = useNavigate();
   const location = useLocation();
+  const isHome =
+    location.pathname === localePath(locale, "") ||
+    location.pathname === `/${locale}` ||
+    location.pathname === `/${locale}/`;
 
   function switchLocale(newLocale: string) {
     return navigate(
@@ -48,12 +53,32 @@ export default function Header({
     );
   }
 
+  const CLOSE_EXIT_MS = 280; // match motion exit duration (ms)
+  const closeTimerRef = useRef<number | null>(null);
+
+  // Ensure we clear any pending timers when unmounting
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
+
   useEffect(() => {
     setCollapse(true);
 
     const headerDom = document.getElementById("header");
 
     if (!headerDom) return;
+
+    // If not on the homepage, force solid header and skip dataset.variant changes.
+    if (!isHome) {
+      headerDom.classList.remove("opacity-50");
+      // make it visually solid (background/text colors are handled in React render via classes)
+      return;
+    }
 
     if (document.documentElement.scrollTop > 0) {
       headerDom.classList.add("opacity-50");
@@ -63,7 +88,7 @@ export default function Header({
 
     setLastHeaderVariant(headerDom.dataset.variant);
     headerDom.dataset.variant = "light";
-  }, [navigation.state]);
+  }, [navigation.state, isHome]);
 
   useEffect(() => {
     const headerDom = document.getElementById("header");
@@ -71,7 +96,13 @@ export default function Header({
     if (!headerDom) return;
 
     if (!collapse) {
-      headerDom.dataset.variant = lastHeaderVariant ?? "light";
+      if (isHome) headerDom.dataset.variant = lastHeaderVariant ?? "light";
+      return;
+    }
+
+    if (!isHome) {
+      // ensure solid on non-home pages
+      headerDom.classList.remove("opacity-50");
       return;
     }
 
@@ -80,13 +111,19 @@ export default function Header({
     } else {
       headerDom.classList.remove("opacity-50");
     }
-  }, [collapse, lastHeaderVariant]);
+  }, [collapse, lastHeaderVariant, isHome]);
 
   useEffect(() => {
     function determineIfHeaderBlurred() {
       const headerDom = document.getElementById("header");
 
       if (!headerDom) {
+        return;
+      }
+
+      if (!isHome) {
+        // keep non-home header solid
+        headerDom.classList.remove("opacity-50");
         return;
       }
 
@@ -102,12 +139,12 @@ export default function Header({
     return () => {
       document.removeEventListener("scroll", determineIfHeaderBlurred);
     };
-  }, [collapse]);
+  }, [collapse, isHome]);
 
   return (
     <header
       className={cn(
-        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-hidden min-w-0 transition-colors motion-safe:transition-all duration-300 ease-out hover:bg-black/20 hover:backdrop-blur-sm",
+        "fixed top-0 w-full h-20 left-0 z-40 group text-white overflow-visible min-w-0 transition-colors motion-safe:transition-all duration-300 ease-out hover:bg-black/20 hover:backdrop-blur-sm",
         !collapse
       )}
       id="header"
@@ -137,49 +174,32 @@ export default function Header({
         <nav className="hidden lg:flex items-center gap-20 flex-1 justify-center relative">
           <Link
             to={localePath(locale, "")}
-            className={cn(
-              "flex items-center gap-1 flex-none relative lg:hidden",
-              location.pathname === localePath(locale, "") ||
-                location.pathname === `/${locale}` ||
-                location.pathname === `/${locale}/`
-                ? "after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-[#fff]"
-                : ""
-            )}
+            className="flex items-center gap-1 flex-none relative lg:hidden"
           >
             <img
               src={brand.url}
               alt={brand.description}
               className={cn(
                 "w-8 h-6 max-w-full motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transition-none group-hover:scale-105",
-                !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
+                !collapse ? "" : ""
               )}
             />
             <h1
               className={cn(
                 "font-sans font-semibold uppercase tracking-wide text-sm",
-                !collapse ? "hidden sm:block" : ""
+                !collapse ? "hidden sm:block" : "text-white",
               )}
             >
               Visual Ennode
             </h1>
           </Link>
-          <Link
-            to={localePath(locale, "")}
-            className={cn(
-              "flex items-center gap-1 flex-none relative",
-              location.pathname === localePath(locale, "") ||
-                location.pathname === `/${locale}` ||
-                location.pathname === `/${locale}/`
-                ? "after:absolute after:bottom-[-1.875rem] after:left-0 after:right-0 after:h-px after:bg-[#fff]"
-                : ""
-            )}
-          >
+          <Link to={localePath(locale, "")} className="flex items-center gap-1 flex-none relative">
             <img
               src={brand.url}
               alt={brand.description}
               className={cn(
                 "w-8 h-6 motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transition-none group-hover:scale-105",
-                !collapse ? "" : "group-data-[variant=dark]:invert-[.6]"
+                !collapse ? "" : ""
               )}
             />
             <h1
@@ -189,7 +209,7 @@ export default function Header({
                 !collapse ? "hidden sm:block" : "",
                 /* make the text follow the header variant so it matches the img logo color */
                 /* when header has data-variant=dark the img uses an invert filter; mirror color for text */
-                "group-data-[variant=dark]:invert-[.6]"
+                ""
               )}
             >
               Visual Ennode
@@ -308,47 +328,66 @@ export default function Header({
 
         {/* Mobile Controls */}
         <div className="ml-auto flex items-center gap-7">
-          {!collapse ? (
-            <motion.div
-              initial={{ translateX: "4rem", opacity: 0 }}
-              whileInView={{ translateX: 0, opacity: 1 }}
-              transition={{ duration: 1, delay: 0.25 }}
-              className="flex items-center gap-7 lg:hidden"
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="flex items-center cursor-pointer rounded-none gap-2 flex-none uppercase">
-                    <GlobeIcon className="size-7" /> {locale}
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-44 mt-2 rounded-none bg-[#111111] p-6 shadow-lg flex flex-col items-center gap-6"
-                >
-                  <DropdownMenuItem
-                    onClick={() => switchLocale("en")}
-                    className="w-full text-center text-lg py-3"
+          <AnimatePresence initial={false}>
+            {!collapse && (
+              <motion.div
+                key="mobile-open"
+                initial={{ translateX: "4rem", opacity: 0 }}
+                animate={{ translateX: 0, opacity: 1 }}
+                exit={{ translateX: "4rem", opacity: 0 }}
+                transition={{ duration: 0.28 }}
+                className="flex items-center gap-7 lg:hidden"
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="flex items-center cursor-pointer rounded-none gap-2 flex-none uppercase">
+                      <GlobeIcon className="size-7" /> {locale}
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-44 mt-2 rounded-none bg-[#111111] p-6 shadow-lg flex flex-col items-center gap-6"
                   >
-                    English
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => switchLocale("ko")}
-                    className={cn(
-                      "w-full text-center text-xl font-medium py-4",
-                      locale === "ko" ? "bg-white text-black" : "text-white/80"
-                    )}
-                  >
-                    Korean
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuItem
+                      onClick={() => switchLocale("en")}
+                      className="w-full text-center text-lg py-3"
+                    >
+                      English
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => switchLocale("ko")}
+                      className={cn(
+                        "w-full text-center text-xl font-medium py-4",
+                        locale === "ko" ? "bg-white text-black" : "text-white/80"
+                      )}
+                    >
+                      Korean
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              <CrossIcon
-                className="size-6 cursor-pointer select-none flex-none"
-                onClick={() => setCollapse(true)}
-              />
-            </motion.div>
-          ) : (
+                <CrossIcon
+                  className="size-6 cursor-pointer select-none flex-none"
+                  onClick={() => {
+                    // start coordinated close: mark closing so the hamburger doesn't flash,
+                    // then collapse (which will trigger AnimatePresence exit). Keep `closing`
+                    // true for the duration of the exit animation.
+                    setClosing(true);
+                    setCollapse(true);
+                    if (closeTimerRef.current) {
+                      clearTimeout(closeTimerRef.current);
+                    }
+                    closeTimerRef.current = window.setTimeout(() => {
+                      setClosing(false);
+                      closeTimerRef.current = null;
+                    }, CLOSE_EXIT_MS + 30);
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {collapse && !closing && (
             <HamburgerMenuIcon
               className="size-9 cursor-pointer select-none flex-none lg:hidden"
               onClick={() => setCollapse(false)}
@@ -357,17 +396,17 @@ export default function Header({
         </div>
       </Container>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-        whileInView={{ opacity: 1 }}
-        className={cn(
-          "fixed inset-0 w-full pt-20 h-dvh max-h-screen bg-[#1B1B1B] @container/header overflow-hidden min-w-0",
-          collapse ? "hidden" : "block"
-        )}
-        style={{ containerType: "size" }}
-      >
-        <div className="flex flex-col h-full pb-14">
+      <AnimatePresence>
+        {!collapse && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className={"fixed inset-0 w-full pt-20 h-dvh max-h-screen bg-[#1B1B1B] @container/header overflow-hidden min-w-0"}
+            style={{ containerType: "size" }}
+          >
+            <div className="flex flex-col h-full pb-14">
           <div className="p-0 lg:p-7 grow h-full flex items-center justify-center">
             <ul className="font-normal text-3xl tracking-wide flex flex-col items-center gap-10">
               <motion.li
@@ -380,6 +419,10 @@ export default function Header({
                   prefetch="render"
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
+                  onClick={() => {
+                    setCollapse(true);
+                    navigate(localePath(locale, ""));
+                  }}
                 >
                   {t["component.header.home"]}
                 </Link>
@@ -394,6 +437,10 @@ export default function Header({
                   prefetch="render"
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
+                  onClick={() => {
+                    setCollapse(true);
+                    navigate(localePath(locale, "works"));
+                  }}
                 >
                   {t["component.header.works"]}
                 </Link>
@@ -408,6 +455,10 @@ export default function Header({
                   prefetch="render"
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
+                  onClick={() => {
+                    setCollapse(true);
+                    navigate(localePath(locale, "news"));
+                  }}
                 >
                   {t["News"]}
                 </Link>
@@ -422,6 +473,10 @@ export default function Header({
                   prefetch="render"
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
+                  onClick={() => {
+                    setCollapse(true);
+                    navigate(localePath(locale, "about"));
+                  }}
                 >
                   {t["component.header.about"]}
                 </Link>
@@ -436,6 +491,10 @@ export default function Header({
                   prefetch="render"
                   preventScrollReset={false}
                   className="link-animation after:h-0.5 after:-bottom-1"
+                  onClick={() => {
+                    setCollapse(true);
+                    navigate(localePath(locale, "career"));
+                  }}
                 >
                   {t["component.header.career"]}
                 </Link>
@@ -448,6 +507,10 @@ export default function Header({
                 <Link
                   to={localePath(locale, "contact")}
                   className="link-animation after:h-0.5 after:-bottom-1"
+                  onClick={() => {
+                    setCollapse(true);
+                    navigate(localePath(locale, "contact"));
+                  }}
                 >
                   {t["component.header.contact"]}
                 </Link>
@@ -470,9 +533,10 @@ export default function Header({
               />
             </motion.div>
           </Container>
-          <Footer />
         </div>
-      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
     </header>
   );
 }

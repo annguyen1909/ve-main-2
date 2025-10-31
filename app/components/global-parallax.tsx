@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Lightweight two-layer cursor (outer ring + inner dot).
@@ -9,6 +9,11 @@ import { useEffect, useRef } from "react";
 export default function GlobalParallax() {
 	const outerRef = useRef<HTMLDivElement | null>(null);
 	const innerRef = useRef<HTMLDivElement | null>(null);
+
+	// Only enable the custom cursor on the client for fine-pointer devices
+	// and at least the small breakpoint width to avoid rendering on phones.
+	const [enabled, setEnabled] = useState(false);
+	const [mounted, setMounted] = useState(false);
 
 	// pointer holds target positions and current smoothed positions for both layers
 	const pointer = useRef({
@@ -23,15 +28,20 @@ export default function GlobalParallax() {
 	});
 
 	useEffect(() => {
+		// client-only mount flag to avoid SSR/client markup mismatch
+		setMounted(true);
+
 		if (typeof window === "undefined") return;
 
-		// Skip on touch-first / coarse pointer devices
-		try {
-			const mq = window.matchMedia("(pointer: coarse)");
-			if (mq.matches) return;
-		} catch (e) {
-			// ignore and continue
-		}
+		const isTouch =
+			("ontouchstart" in window || navigator.maxTouchPoints > 0 || (window.matchMedia && window.matchMedia("(pointer: coarse)").matches));
+		const isFine = window.matchMedia ? window.matchMedia("(pointer: fine)").matches : true;
+		const isWide = typeof window.innerWidth === 'number' ? window.innerWidth >= 640 : true; // sm breakpoint
+
+		const shouldEnable = !isTouch && isFine && isWide;
+		setEnabled(shouldEnable);
+
+		if (!shouldEnable) return;
 
 		let raf = 0;
 
@@ -43,8 +53,8 @@ export default function GlobalParallax() {
 		// keep the cursor from being interactive
 		window.addEventListener("mousemove", onMove, { passive: true });
 
-	const outerEase = 0.125; // outer ring is a bit slower
-	const innerEase = 0.1625; // inner dot lags more for a subtle parallax
+		const outerEase = 0.125; // outer ring is a bit slower
+		const innerEase = 0.1625; // inner dot lags more for a subtle parallax
 
 		function loop() {
 			const p = pointer.current;
@@ -83,6 +93,9 @@ export default function GlobalParallax() {
 			window.removeEventListener("mousemove", onMove);
 		};
 	}, []);
+
+
+	if (!mounted || !enabled) return null;
 
 	return (
 		<div aria-hidden className="pointer-events-none">

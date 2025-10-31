@@ -51,7 +51,7 @@ const ProcessSection = forwardRef<HTMLElement>((props, forwardedRef) => {
                 <ProcessItem key={index} item={item} index={index} itemCount={processes.length} />
               )}
             </div>
-            <ScrollBar orientation="horizontal" className="w-40 mx-auto mb-14 lg:mb-0 h-2 p-0 bg-[#121212]" />
+            <ScrollBar orientation="horizontal" className="w-40 mb-14 lg:mb-0 h-2 p-0 bg-[#121212]" />
           </ScrollArea>
         </div>
       </Container>

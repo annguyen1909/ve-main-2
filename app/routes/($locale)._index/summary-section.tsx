@@ -23,20 +23,28 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
   }, [inView]);
 
   const categories = [
-    (translations as Record<string, string>)["home.categories.still_image"] ?? "Still Image",
-    (translations as Record<string, string>)["home.categories.animation"] ?? "Animation",
-    (translations as Record<string, string>)["home.categories.cinematic"] ?? "Cinematic",
-    (translations as Record<string, string>)["home.categories.product"] ?? "Product",
+    (translations as Record<string, string>)["home.categories.still_image"] ??
+      "Still Image",
+    (translations as Record<string, string>)["home.categories.animation"] ??
+      "Animation",
+    (translations as Record<string, string>)["home.categories.cinematic"] ??
+      "Cinematic",
+    (translations as Record<string, string>)["home.categories.product"] ??
+      "Product",
     (translations as Record<string, string>)["home.categories.vfx"] ?? "VFX",
   ];
 
-  const images = [
-    "/images/hero-1.jpg",
-    "/images/hero-2.jpg",
-    "/images/hero-3.jpg",
-    "/images/hero-4.jpg",
-    "/images/hero-5.jpg",
+  // use videos instead of static images (files located in public/videos)
+  const videos = [
+    "/videos/still%20image.mp4",
+    "/videos/animation.mp4",
+    "/videos/cinematic.mp4",
+    "/videos/product.mp4",
+    "/videos/vfx.mp4",
   ];
+
+  // refs to control video playback on hover
+  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
 
   // no default selection on desktop; default to first image for mobile to avoid empty image area
   const [selected, setSelected] = useState<number | null>(null);
@@ -45,6 +53,34 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   // ensure we show at least the first image by default (helps mobile where no hover occurs)
   const visibleIndex = hovered ?? selected ?? 0;
+
+  // Play/pause videos when categories are hovered (desktop). Videos are muted so autoplay is allowed.
+  useEffect(() => {
+    // Play the hovered video on desktop, and always play the currently
+    // visible video (visibleIndex) so mobile devices — which don't have
+    // hover — will start the preview when the selected index changes.
+    videoRefs.current.forEach((v, idx) => {
+      if (!v) return;
+      const shouldPlay = hovered === idx || visibleIndex === idx;
+      if (shouldPlay) {
+        try {
+          v.currentTime = 0;
+          const p = v.play();
+          if (p && typeof (p as Promise<void>).catch === "function")
+            (p as Promise<void>).catch(() => {});
+        } catch (e) {
+          // ignore play errors
+        }
+      } else {
+        try {
+          v.pause();
+          v.currentTime = 0;
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+  }, [hovered, visibleIndex]);
 
   // touch/swipe support for mobile
   const touchStartX = useRef<number | null>(null);
@@ -59,7 +95,12 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     touchMoved.current = false;
     lastTouchX.current = null;
     // debug
-    if (typeof window !== 'undefined') console.debug('[swipe] touchstart', touchStartX.current, touchStartY.current);
+    if (typeof window !== "undefined")
+      console.debug(
+        "[swipe] touchstart",
+        touchStartX.current,
+        touchStartY.current
+      );
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -71,11 +112,23 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     if (Math.abs(dy) > Math.abs(dx)) return;
     if (Math.abs(dx) > 10) touchMoved.current = true;
     lastTouchX.current = t.clientX;
-    if (typeof window !== 'undefined') console.debug('[swipe] touchmove dx', dx, 'dy', dy, 'lastX', lastTouchX.current);
+    if (typeof window !== "undefined")
+      console.debug(
+        "[swipe] touchmove dx",
+        dx,
+        "dy",
+        dy,
+        "lastX",
+        lastTouchX.current
+      );
   };
 
   const onTouchEnd = () => {
-    if (!touchMoved.current || touchStartX.current == null || lastTouchX.current == null) {
+    if (
+      !touchMoved.current ||
+      touchStartX.current == null ||
+      lastTouchX.current == null
+    ) {
       touchStartX.current = null;
       touchStartY.current = null;
       touchMoved.current = false;
@@ -84,7 +137,7 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     const dx = lastTouchX.current - (touchStartX.current ?? 0);
     const threshold = 30;
     if (Math.abs(dx) >= threshold) {
-      const len = images.length;
+      const len = videos.length;
       if (dx < 0) {
         // swiped left → next
         setSelected((prev) => {
@@ -104,7 +157,7 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     touchStartY.current = null;
     touchMoved.current = false;
     lastTouchX.current = null;
-    if (typeof window !== 'undefined') console.debug('[swipe] touchend dx', dx);
+    if (typeof window !== "undefined") console.debug("[swipe] touchend dx", dx);
   };
 
   const onTouchCancel = () => {
@@ -112,7 +165,7 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     touchStartY.current = null;
     touchMoved.current = false;
     lastTouchX.current = null;
-    if (typeof window !== 'undefined') console.debug('[swipe] touchcancel');
+    if (typeof window !== "undefined") console.debug("[swipe] touchcancel");
   };
 
   // Pointer event fallbacks (some browsers support pointer events better)
@@ -121,7 +174,8 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     touchStartY.current = e.clientY;
     touchMoved.current = false;
     lastTouchX.current = null;
-    if (typeof window !== 'undefined') console.debug('[swipe] pointerdown', e.clientX, e.clientY);
+    if (typeof window !== "undefined")
+      console.debug("[swipe] pointerdown", e.clientX, e.clientY);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -131,11 +185,16 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     if (Math.abs(dy) > Math.abs(dx)) return;
     if (Math.abs(dx) > 10) touchMoved.current = true;
     lastTouchX.current = e.clientX;
-    if (typeof window !== 'undefined') console.debug('[swipe] pointermove dx', dx, 'dy', dy);
+    if (typeof window !== "undefined")
+      console.debug("[swipe] pointermove dx", dx, "dy", dy);
   };
 
   const onPointerUp = () => {
-    if (!touchMoved.current || touchStartX.current == null || lastTouchX.current == null) {
+    if (
+      !touchMoved.current ||
+      touchStartX.current == null ||
+      lastTouchX.current == null
+    ) {
       touchStartX.current = null;
       touchStartY.current = null;
       touchMoved.current = false;
@@ -144,7 +203,7 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     const dx = lastTouchX.current - (touchStartX.current ?? 0);
     const threshold = 30;
     if (Math.abs(dx) >= threshold) {
-      const len = images.length;
+      const len = videos.length;
       if (dx < 0) {
         setSelected((prev) => ((prev ?? 0) + 1) % len);
       } else {
@@ -155,7 +214,8 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
     touchStartY.current = null;
     touchMoved.current = false;
     lastTouchX.current = null;
-    if (typeof window !== 'undefined') console.debug('[swipe] pointerup dx', dx);
+    if (typeof window !== "undefined")
+      console.debug("[swipe] pointerup dx", dx);
   };
 
   return (
@@ -164,13 +224,15 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
       ref={ref}
       {...props}
     >
-  <div className="relative h-full z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 min-w-0">
+      <div className="relative h-full z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 min-w-0">
         <div className="grid grid-cols-1 md:grid-cols-12 items-start md:items-center md:min-h-[70vh] gap-8 md:gap-12">
           {/* left list (desktop) - hidden on small screens */}
           <div className="md:col-span-5 col-span-12 h-full hidden md:flex md:flex-col justify-between md:self-end md:relative order-2 md:order-1">
             <div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
-                {(translations as Record<string,string>)["home.summary.services"] ?? "SERVICES"}
+                {(translations as Record<string, string>)[
+                  "home.summary.services"
+                ] ?? "SERVICES"}
               </h2>
             </div>
             <div className="space-y-2 md:space-y-4">
@@ -267,23 +329,27 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
-                style={{ touchAction: 'pan-y' }}
+                style={{ touchAction: "pan-y" }}
               >
                 {/* mobile-only subtle top gradient to add depth on small screens */}
                 <div className="md:hidden absolute inset-x-0 top-0 h-28 pointer-events-none z-20" />
-                {images.map((src, i) => {
+                {videos.map((src, i) => {
                   // compute a parallax offset when the image corresponds to the hovered category
                   const isVisible = visibleIndex === i;
                   // smaller movement for touch or if not hovered
                   const intensity = isVisible && hovered !== null ? 18 : 6;
                   const offsetX = isVisible ? mouse.x * intensity : 0;
                   const offsetY = isVisible ? mouse.y * intensity : 0;
-
                   return (
-                    <img
+                    <video
                       key={i}
+                      ref={(el) => (videoRefs.current[i] = el)}
                       src={src}
-                      alt={categories[i] ?? `image-${i + 1}`}
+                      muted
+                      playsInline
+                      loop
+                      autoPlay
+                      preload="auto"
                       className={`pointer-events-none absolute inset-0 h-full w-full object-cover drop-shadow-2xl transition-all will-change-[opacity,transform] ${
                         isVisible ? "opacity-100 z-10" : "opacity-0 z-0"
                       }`}
@@ -296,56 +362,28 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
                           : "opacity 280ms ease-out, transform 360ms ease-out",
                         objectPosition: "center",
                       }}
+                      // prevent native controls from appearing
+                      controls={false}
+                      aria-hidden
                     />
                   );
                 })}
 
                 {/* announce current category for screen readers */}
                 <span className="sr-only" aria-live="polite">
-                  {categories[visibleIndex] ?? ''}
+                  {categories[visibleIndex] ?? ""}
                 </span>
-
-                {/* mobile: stacked translucent category boxes (left side) */}
-                <div className="md:hidden absolute left-4 top-8 z-40 flex flex-col gap-4 pointer-events-auto">
-                  {categories.map((label, i) => (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => setSelected(i)}
-                      className={`text-left focus:outline-none transition-all duration-300 ease-in-out flex items-center gap-3 px-4 py-3 min-w-[160px] backdrop-blur-sm ${
-                        visibleIndex === i
-                          ? "bg-gradient-to-r from-white/80 to-transparent text-black"
-                          : "bg-gradient-to-r from-white/6 to-transparent text-white/70"
-                      }`}
-                      aria-pressed={visibleIndex === i}
-                    >
-                      <span
-                        className={`block text-[20px] md:text-5xl leading-tight truncate ${
-                          visibleIndex === i
-                            ? "text-black font-bold"
-                            : "text-outline-dark"
-                        }`}
-                        style={{
-                          fontFamily: "'Gilroy', sans-serif",
-                          letterSpacing: "-0.44px",
-                        }}
-                      >
-                        {label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
 
                 {/* mobile split pill: chevron - label - chevron (centered) */}
                 <div
                   className="md:hidden absolute left-4 right-4 bottom-10 z-40 flex items-center justify-center"
-                  style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+                  style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
                 >
                   <button
                     type="button"
                     aria-label="Previous image"
                     onClick={() => {
-                      const len = images.length;
+                      const len = videos.length;
                       setSelected((prev) => {
                         const current = prev ?? 0;
                         return (current - 1 + len) % len;
@@ -357,14 +395,16 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
                   </button>
 
                   <div className="mx-3 px-4 py-2 rounded-full bg-black/60 backdrop-blur-sm text-white text-sm flex items-center gap-3 min-w-[120px] justify-center">
-                    <span className="font-medium truncate">{categories[visibleIndex] ?? ''}</span>
+                    <span className="font-medium truncate">
+                      {categories[visibleIndex] ?? ""}
+                    </span>
                   </div>
 
                   <button
                     type="button"
                     aria-label="Next image"
                     onClick={() => {
-                      const len = images.length;
+                      const len = videos.length;
                       setSelected((prev) => {
                         const current = prev ?? 0;
                         return (current + 1) % len;
@@ -378,19 +418,20 @@ const SummarySection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
                 {/* mobile pagination dots (tap to switch) - lowered to avoid overlapping the pill */}
                 <div className="md:hidden absolute left-0 right-0 bottom-3 flex justify-center gap-2 z-30">
-                  {images.map((_, idx) => (
+                  {videos.map((_, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => setSelected(idx)}
-                      aria-label={`Show ${categories[idx] ?? `image ${idx + 1}`}`}
+                      aria-label={`Show ${
+                        categories[idx] ?? `image ${idx + 1}`
+                      }`}
                       className={`w-2.5 h-2.5 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                         visibleIndex === idx ? "bg-white" : "bg-white/30"
                       }`}
                     />
                   ))}
                 </div>
-                {/* subtle gradient overlay to improve contrast for captions */}
               </div>
             </div>
           </div>

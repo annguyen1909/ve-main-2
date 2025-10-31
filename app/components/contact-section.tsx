@@ -7,7 +7,7 @@ import { ContactCtaSection } from "./contact-cta-section"
 
 const ContactSection = forwardRef<HTMLElement>((props, forwardedRef) => {
   const ref = useRef<HTMLElement>(null);
-  const { translations: t } = useOutletContext<AppContext>();
+  const { translations: t, locale } = useOutletContext<AppContext>();
   const inView = useInView(ref, { amount: 1 })
 
   useImperativeHandle(forwardedRef, () => ref.current as HTMLElement);
@@ -20,7 +20,7 @@ const ContactSection = forwardRef<HTMLElement>((props, forwardedRef) => {
     headerDom.dataset.variant = "light";
   }, [inView]);
 
-  return <section ref={ref} className="flex" {...props}>
+  return <section ref={ref} className={`flex ${locale === "ko" ? "ko-solid" : ""}`} {...props}>
     <Container className="flex-none flex flex-col lg:h-full mt-8 py-6 sm:mt-12">
       <div className="text-center mb-8" data-koreanable>
         <h3 className="font-semibold text-3xl sm:text-4xl md:text-5xl uppercase text-white mb-2 md:mb-3">{t['component.contact.title']}</h3>

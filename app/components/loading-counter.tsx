@@ -1,7 +1,6 @@
 "use client";
 
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
-import type { MotionValue } from "framer-motion";
+import { animate, useMotionValue } from "framer-motion";
 import { useEffect } from "react";
 // no outlet context required for this component
 
@@ -14,6 +13,9 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
   // outlet context is available if needed via useOutletContext
 
   const count = useMotionValue(0);
+  const STORAGE_KEY = "ve:loadingShown";
+
+  // loader behavior: animate `count` from 0→100 and call onFinish when done.
 
   // Respect reduced motion - detect once on mount
   const prefersReduced =
@@ -22,18 +24,42 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // If we've already shown the loading animation this tab, skip it.
+    try {
+      const alreadyShown = window.sessionStorage.getItem(STORAGE_KEY) === "true";
+      if (alreadyShown) {
+        count.set(100);
+        onFinish?.();
+        return;
+      }
+    } catch (e) {
+      // sessionStorage might be unavailable; fall back to animating normally
+    }
+
     if (prefersReduced) {
       // jump directly to finished state
       count.set(100);
+      try {
+        window.sessionStorage.setItem(STORAGE_KEY, "true");
+      } catch (e) {
+        /* ignore */
+      }
       onFinish?.();
       return;
     }
 
-  // animate count from 0 to 100 (slower for a longer load feel)
-  const controls = animate(count, 100, { duration: 1.5, ease: "easeOut" });
+    // animate count from 0 to 100 (slower for a longer load feel)
+    const controls = animate(count, 100, { duration: 1.5, ease: "easeOut" });
     const unsubscribe = count.onChange((v) => {
       if (v >= 100) {
         // finished
+        try {
+          window.sessionStorage.setItem(STORAGE_KEY, "true");
+        } catch (e) {
+          /* ignore */
+        }
         onFinish?.();
         controls.stop();
       }
@@ -44,20 +70,7 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
     };
   }, [count, onFinish, prefersReduced]);
 
-  // derive a clipPath motion value from the count motion value so the overlay is revealed bottom->top
-  const clipPath = useTransform(count, (v) => `inset(${100 - v}% 0 0 0)`);
-
-  // typed style object that accepts MotionValue<string> for clipPath properties
-  const overlayStyle: {
-    filter: string;
-    WebkitClipPath: MotionValue<string> | string;
-    clipPath: MotionValue<string> | string;
-  } = {
-    filter: "brightness(0) invert(1)",
-    WebkitClipPath: clipPath,
-    clipPath: clipPath,
-  };
-
+  // (No clipPath required for the CSS-based loader)
   return (
     <div
       role="img"
@@ -66,128 +79,40 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
       className="flex items-center justify-center"
       style={{ width: "100%", height: "100%" }}
     >
-  <div className="relative w-64 h-36 sm:w-120 sm:h-72 select-none">
-        {/* Inline SVG: bottom layer is the outline (stroke only), top layer is the filled version revealed by the clipPath */}
-
-        {/* Outline layer */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="100%"
-          height="100%"
-          viewBox="0 0 2048 1693"
-          preserveAspectRatio="xMidYMid meet"
-          className="w-full h-full block"
-          aria-hidden="true"
-        >
-          <g
-            transform="translate(0,1693) scale(0.1,-0.1)"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="80"
-            strokeLinejoin="round"
-            strokeLinecap="round"
+      <div className="relative w-96 h-96 sm:w-96 sm:h-96 select-none flex items-center justify-center">
+        {/* Replaced SVG loader with CSS-based text loader for stability during debugging */}
+          {/* Inline SVG: stroke-only outlines visible, fill revealed from bottom→top via an internal mask rectangle that animates upward. */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 907.09 748.35"
+            className="w-48 h-48 md:w-80 md:h-80"
+            role="img"
+            aria-label="logo"
           >
-            <path d="M7360 11081 c0 -5 11 -38 25 -75 14 -36 23 -66 20 -66 -3 0 5 -24 16
--52 21 -53 25 -63 53 -168 8 -30 22 -75 31 -100 9 -25 18 -53 20 -63 2 -10 13
--44 23 -75 11 -31 27 -84 37 -117 10 -33 29 -91 42 -130 13 -38 24 -72 23 -75
--1 -5 35 -123 50 -165 17 -44 30 -83 50 -155 27 -90 45 -152 75 -245 13 -38
-32 -99 43 -135 11 -36 29 -94 40 -130 11 -36 28 -92 37 -125 10 -33 26 -82 35
--110 17 -48 39 -119 90 -285 13 -41 31 -100 41 -130 9 -30 27 -89 40 -130 12
--41 25 -84 30 -95 4 -11 22 -67 39 -125 18 -58 38 -123 45 -145 7 -22 34 -107
-59 -190 51 -162 69 -223 112 -357 26 -86 38 -106 41 -70 1 9 11 39 22 65 12
-27 21 56 21 64 0 15 18 75 49 163 8 25 16 47 16 50 1 3 8 30 18 60 9 30 17 60
-18 65 0 6 14 45 29 88 16 42 27 77 25 77 -2 0 3 19 11 43 9 23 17 51 20 62 2
-11 15 52 28 90 13 39 29 90 36 115 7 25 16 54 20 65 63 171 72 216 56 278 -15
-53 -41 135 -55 172 -12 29 -31 91 -36 112 -2 10 -20 67 -39 126 -20 60 -36
-115 -36 123 0 8 -4 22 -10 32 -12 23 -70 214 -70 233 0 8 -4 19 -8 25 -5 5
--14 29 -22 54 -7 25 -21 70 -31 100 -9 30 -21 71 -25 90 -3 19 -12 48 -19 65
--7 16 -23 64 -35 105 -12 41 -25 82 -28 90 -3 8 -6 20 -8 25 -1 6 -11 35 -22
-65 -10 30 -19 57 -19 60 -1 9 -25 95 -33 115 -11 27 -23 66 -50 155 -13 41
--31 100 -40 130 -10 30 -27 89 -40 130 -12 41 -27 89 -32 105 -6 17 -16 50
--23 75 l-12 45 -397 3 c-227 1 -396 -2 -396 -7z"/>
-            <path d="M10404 11063 c-3 -16 -14 -50 -24 -78 -10 -27 -24 -70 -31 -95 -16
--57 -15 -52 -21 -70 -4 -8 -13 -37 -22 -65 -18 -57 -69 -212 -87 -265 -33 -97
--58 -170 -73 -215 -10 -27 -20 -59 -21 -70 -2 -11 -12 -40 -22 -65 -11 -25
--23 -60 -26 -78 -4 -19 -13 -48 -20 -65 -8 -18 -24 -66 -37 -107 -31 -100 -41
--131 -50 -155 -25 -67 -94 -280 -119 -370 -5 -16 -17 -52 -26 -80 -52 -147
--95 -275 -100 -300 -3 -11 -13 -42 -23 -70 -11 -27 -25 -68 -31 -90 -7 -22
--16 -49 -21 -60 -7 -18 -41 -126 -46 -150 -2 -5 -17 -50 -34 -100 -18 -49 -34
--101 -36 -114 -3 -14 -13 -45 -23 -70 -10 -25 -55 -161 -100 -301 -46 -140
--92 -280 -104 -310 -12 -30 -22 -59 -22 -65 0 -5 -10 -37 -22 -70 -11 -33 -35
--107 -53 -165 -19 -58 -36 -109 -40 -115 -4 -5 -10 -21 -12 -35 -3 -14 -14
--47 -23 -75 -35 -97 -52 -151 -70 -210 -9 -33 -25 -82 -35 -110 -44 -131 -101
--302 -105 -322 -3 -12 -14 -42 -25 -67 -10 -25 -17 -46 -15 -46 3 0 -3 -22
--13 -48 -18 -46 -18 -49 0 -91 10 -24 16 -46 14 -49 -3 -2 1 -17 10 -33 l15
--29 2194 0 2195 0 0 325 0 325 -1745 0 c-960 0 -1745 1 -1745 3 0 6 29 96 43
-132 8 22 20 60 28 85 7 25 16 49 21 55 4 5 8 17 8 28 0 10 10 46 23 80 37 99
-58 160 63 186 3 14 13 45 23 70 26 66 52 143 56 166 3 11 18 63 36 115 37 114
-41 125 39 125 -2 0 12 38 39 110 19 48 83 241 85 255 1 8 6 27 10 43 l8 27
-1154 0 1154 0 0 320 0 320 -1045 0 -1045 0 6 28 c4 15 29 92 56 172 27 80 53
-161 59 180 5 19 23 73 40 120 16 47 34 101 39 120 5 19 35 107 66 195 30 88
-57 172 60 188 2 15 13 45 24 67 11 23 19 44 16 48 -2 4 6 32 20 62 13 30 23
-62 24 70 0 8 9 37 19 65 11 27 28 78 37 113 l18 62 453 0 453 0 0 320 0 320
--745 0 -745 0 -6 -27z"/>
-          </g>
-        </svg>
+            <style>{`
+              .fill { fill: #fff }
+              /* mask rect starts translated down (hidden) and moves up to reveal */
+              .mask-rect { transform-box: fill-box; transform: translateY(100%); animation: mask-up 1000ms ease forwards 300ms }
+              @keyframes mask-up { to { transform: translateY(0%); } }
+            `}</style>
 
-        {/* Filled layer (revealed by clip-path). Use motion.svg so we can attach the MotionValue-derived clipPath style */}
-        <motion.svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="100%"
-          height="100%"
-          viewBox="0 0 2048 1693"
-          preserveAspectRatio="xMidYMid meet"
-          className="w-full h-full pointer-events-none absolute left-0 top-0"
-          style={overlayStyle}
-          aria-hidden="true"
-        >
-          <g
-            transform="translate(0,1693) scale(0.1,-0.1)"
-            fill="currentColor"
-            stroke="none"
-          >
-            <path d="M7360 11081 c0 -5 11 -38 25 -75 14 -36 23 -66 20 -66 -3 0 5 -24 16
--52 21 -53 25 -63 53 -168 8 -30 22 -75 31 -100 9 -25 18 -53 20 -63 2 -10 13
--44 23 -75 11 -31 27 -84 37 -117 10 -33 29 -91 42 -130 13 -38 24 -72 23 -75
--1 -5 35 -123 50 -165 17 -44 30 -83 50 -155 27 -90 45 -152 75 -245 13 -38
-32 -99 43 -135 11 -36 29 -94 40 -130 11 -36 28 -92 37 -125 10 -33 26 -82 35
--110 17 -48 39 -119 90 -285 13 -41 31 -100 41 -130 9 -30 27 -89 40 -130 12
--41 25 -84 30 -95 4 -11 22 -67 39 -125 18 -58 38 -123 45 -145 7 -22 34 -107
-59 -190 51 -162 69 -223 112 -357 26 -86 38 -106 41 -70 1 9 11 39 22 65 12
-27 21 56 21 64 0 15 18 75 49 163 8 25 16 47 16 50 1 3 8 30 18 60 9 30 17 60
-18 65 0 6 14 45 29 88 16 42 27 77 25 77 -2 0 3 19 11 43 9 23 17 51 20 62 2
-11 15 52 28 90 13 39 29 90 36 115 7 25 16 54 20 65 63 171 72 216 56 278 -15
-53 -41 135 -55 172 -12 29 -31 91 -36 112 -2 10 -20 67 -39 126 -20 60 -36
-115 -36 123 0 8 -4 22 -10 32 -12 23 -70 214 -70 233 0 8 -4 19 -8 25 -5 5
--14 29 -22 54 -7 25 -21 70 -31 100 -9 30 -21 71 -25 90 -3 19 -12 48 -19 65
--7 16 -23 64 -35 105 -12 41 -25 82 -28 90 -3 8 -6 20 -8 25 -1 6 -11 35 -22
-65 -10 30 -19 57 -19 60 -1 9 -25 95 -33 115 -11 27 -23 66 -50 155 -13 41
--31 100 -40 130 -10 30 -27 89 -40 130 -12 41 -27 89 -32 105 -6 17 -16 50
--23 75 l-12 45 -397 3 c-227 1 -396 -2 -396 -7z"/>
-            <path d="M10404 11063 c-3 -16 -14 -50 -24 -78 -10 -27 -24 -70 -31 -95 -16
--57 -15 -52 -21 -70 -4 -8 -13 -37 -22 -65 -18 -57 -69 -212 -87 -265 -33 -97
--58 -170 -73 -215 -10 -27 -20 -59 -21 -70 -2 -11 -12 -40 -22 -65 -11 -25
--23 -60 -26 -78 -4 -19 -13 -48 -20 -65 -8 -18 -24 -66 -37 -107 -31 -100 -41
--131 -50 -155 -25 -67 -94 -280 -119 -370 -5 -16 -17 -52 -26 -80 -52 -147
--95 -275 -100 -300 -3 -11 -13 -42 -23 -70 -11 -27 -25 -68 -31 -90 -7 -22
--16 -49 -21 -60 -7 -18 -41 -126 -46 -150 -2 -5 -17 -50 -34 -100 -18 -49 -34
--101 -36 -114 -3 -14 -13 -45 -23 -70 -10 -25 -55 -161 -100 -301 -46 -140
--92 -280 -104 -310 -12 -30 -22 -59 -22 -65 0 -5 -10 -37 -22 -70 -11 -33 -35
--107 -53 -165 -19 -58 -36 -109 -40 -115 -4 -5 -10 -21 -12 -35 -3 -14 -14
--47 -23 -75 -35 -97 -52 -151 -70 -210 -9 -33 -25 -82 -35 -110 -44 -131 -101
--302 -105 -322 -3 -12 -14 -42 -25 -67 -10 -25 -17 -46 -15 -46 3 0 -3 -22
--13 -48 -18 -46 -18 -49 0 -91 10 -24 16 -46 14 -49 -3 -2 1 -17 10 -33 l15
--29 2194 0 2195 0 0 325 0 325 -1745 0 c-960 0 -1745 1 -1745 3 0 6 29 96 43
-132 8 22 20 60 28 85 7 25 16 49 21 55 4 5 8 17 8 28 0 10 10 46 23 80 37 99
-58 160 63 186 3 14 13 45 23 70 26 66 52 143 56 166 3 11 18 63 36 115 37 114
-41 125 39 125 -2 0 12 38 39 110 19 48 83 241 85 255 1 8 6 27 10 43 l8 27
-1154 0 1154 0 0 320 0 320 -1045 0 -1045 0 6 28 c4 15 29 92 56 172 27 80 53
-161 59 180 5 19 23 73 40 120 16 47 34 101 39 120 5 19 35 107 66 195 30 88
-57 172 60 188 2 15 13 45 24 67 11 23 19 44 16 48 -2 4 6 32 20 62 13 30 23
-62 24 70 0 8 9 37 19 65 11 27 28 78 37 113 l18 62 453 0 453 0 0 320 0 320
--745 0 -745 0 -6 -27z"/>
-          </g>
-        </motion.svg>
+            <defs>
+              <mask id="revealMask">
+                <rect x="0" y="0" width="100%" height="100%" fill="black" />
+                <rect className="mask-rect" x="0" y="0" width="100%" height="100%" fill="white" />
+              </mask>
+            </defs>
+
+            {/* Filled shapes that get revealed by the mask */}
+            <g mask="url(#revealMask)">
+              <polygon className="fill" points="373.32 650.33 448.15 423.18 800.59 423.18 800.59 325.16 480.44 325.16 555.27 98.02 693.47 98.02 693.47 0 506.15 0 506.15 0 467.33 0 290.05 538.12 288.53 542.99 288.49 542.86 228.41 725.22 236.03 748.35 341.03 748.35 341.03 748.35 907.71 748.35 907.71 650.33 373.32 650.33" />
+              <polygon className="fill" points="168.5 542.36 228.42 350.23 119.2 0 -.63 0 168.5 542.36" />
+            </g>
+
+          </svg>
+
+        {/* Loader styles are now in `app/tailwind.css` as `.loader` (text)
+            and `.loader-image` / `.loader-image__img` (image mask). */}
       </div>
     </div>
   );

@@ -71,7 +71,7 @@ export default function Index() {
   const { translations: t, locale } = useOutletContext<AppContext>();
 
   return (
-    <>
+    <div className={locale === "ko" ? "ko-solid" : ""}>
       <section className="flex py-7 sm:py-14">
         <Container
           className="flex-none m-auto min-h-full flex flex-col"
@@ -162,6 +162,6 @@ export default function Index() {
         </Container>
       </section>
       <ContactSection />
-    </>
+    </div>
   );
 }

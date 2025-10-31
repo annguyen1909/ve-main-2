@@ -15,7 +15,7 @@ export default {
   				'Montserrat',
   				'serif'
   			],
-        "korean": ["Pretendard", "sans-serif"]
+        "korean": ["SpoqaHanSansNeo", "sans-serif"]
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

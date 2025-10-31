@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, CrossIcon } from "~/components/ui/icon";
 import * as motion from "motion/react-client";
 import { Api } from "~/lib/api";
@@ -59,6 +59,7 @@ export default function Works() {
 
   const [loaded, setLoaded] = useState<boolean>(!work.optimize_attachment_url);
   const [open, setOpen] = useState<boolean>(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   // dialogRef removed (not required)
 
   function handleClickOutside(event: React.MouseEvent) {
@@ -131,30 +132,63 @@ export default function Works() {
           <ChevronLeftIcon className="size-10 drop-shadow" />
         </Link>
 
-        {category.slug === 'image' ? <motion.img
-          src={loaded ? work.attachment_url : (work.optimize_attachment_url ? work.optimize_attachment_url : work.attachment_url)}
-          alt={work.title}
-          className="max-h-full mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-                fetchPriority="high"
-          onLoad={handeLoadImage}
-          exit={{ opacity: 0 }}
-        /> : <motion.video
-          src={work.attachment_url}
-          autoPlay
-          loop
-          className="max-h-full mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-          exit={{ opacity: 0 }}
-        />}
+        {category.slug === 'image' ? (
+          <motion.img
+            src={loaded ? work.attachment_url : (work.optimize_attachment_url ? work.optimize_attachment_url : work.attachment_url)}
+            alt={work.title}
+            className="max-h-full mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+            }}
+            fetchPriority="high"
+            onLoad={handeLoadImage}
+            exit={{ opacity: 0 }}
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            className="max-h-full mx-auto relative"
+          >
+            {/* Video without native controls to avoid browser download menu */}
+            <video
+              ref={videoRef}
+              src={work.attachment_url}
+              autoPlay
+              loop
+              playsInline
+              // disable picture-in-picture where supported
+              disablePictureInPicture
+              // prevent native context menu (reduces direct Save options)
+              onContextMenu={(e) => e.preventDefault()}
+              className="max-h-full mx-auto w-full"
+            >
+              {/* empty captions track to satisfy accessibility requirements */}
+              <track kind="captions" src="/empty.vtt" srcLang="en" label="English captions" />
+            </video>
+
+            {/* Minimal play/pause overlay */}
+            <button
+              aria-label="Toggle play"
+              onClick={(ev) => {
+                ev.stopPropagation();
+                const v = videoRef.current as HTMLVideoElement | null;
+                if (!v) return;
+                if (v.paused) {
+                  void v.play();
+                } else {
+                  v.pause();
+                }
+              }}
+              className="absolute left-4 bottom-4 z-50 bg-black/40 hover:bg-black/60 rounded-full p-2 text-white"
+            >
+              ▶︎/▮▮
+            </button>
+          </motion.div>
+        )}
 
 
         <Link

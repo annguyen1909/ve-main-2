@@ -49,7 +49,7 @@ const TeamSection = forwardRef<HTMLElement, TeamSectionProps>((props, ref) => {
   return (
     <section
       ref={ref}
-      className="h-full bg-[#1b1b1b] overflow-auto flex flex-col items-center py-20 overflow-x-hidden relative overscroll-none"
+      className="min-h-screen bg-[#1b1b1b] flex flex-col items-center py-20 overflow-x-hidden relative overscroll-none"
       {...props}
     >
       <div className="absolute z-0 w-1/2 h-4/5 2xl:h-auto right-0 top-0 hidden xl:block">

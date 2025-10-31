@@ -23,9 +23,12 @@ import { redirect } from "@remix-run/node";
 import { cn } from "./lib/utils";
 import genericTranslations from "public/locales/en/common.json"
 import i18n from "~/i18n";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "./components/ui/sonner";
 import GlobalParallax from "./components/global-parallax";
+import LoadingCounter from "./components/loading-counter";
+import { AnimatePresence, motion } from "framer-motion";
+ 
 
 export const links: LinksFunction = () => [
   {
@@ -68,11 +71,43 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const banners = await api.getBanners().then(res => res.data.data) ?? [];
 
+  // Build the translations object. Start with the keys defined in the English
+  // genericTranslations (so t(key) works for all of those), then also import
+  // the locale-specific JSON and merge any keys that are present there but not
+  // in the English file (this preserves arrays/objects like about.process.steps).
+  const base = Object.fromEntries(
+    Object.keys(genericTranslations).map((key) => [key, t(key)])
+  ) as Record<string, unknown>;
+
+  let localeExtras: Record<string, unknown> = {};
+  try {
+    // dynamic import of locale JSON (keeps arrays/objects intact)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // import path is from project root 'public/locales/<locale>/common.json'
+      // use require to ensure JSON is loaded on the server at runtime
+      // (Vite/Remix will include the file in the build)
+    const localeFile = await import(/* @vite-ignore */ `public/locales/${locale}/common.json`);
+    localeExtras = (localeFile && (localeFile.default ?? localeFile)) as Record<string, unknown>;
+  } catch (err) {
+    // If the locale file doesn't exist or can't be imported, ignore and fall
+    // back to base translations only.
+  }
+
+  const translations = {
+    ...base,
+    // only add keys that are not already present in base so t(key) continues
+    // to control canonical string translations, but arrays/objects from the
+    // locale file will be available as extras (e.g. about.process.steps)
+    ...Object.fromEntries(
+      Object.keys(localeExtras).filter((k) => !(k in base)).map((k) => [k, localeExtras[k]])
+    ),
+  } as typeof genericTranslations & Record<string, unknown>;
+
   return {
     configuration: await api.getConfiguration(),
-    translations: Object.fromEntries(Object.keys(genericTranslations).map(key => [key, t(key)])) as typeof genericTranslations,
+    translations,
     locale,
-    banners
+    banners,
   };
 }
 
@@ -104,6 +139,13 @@ export default function App() {
 
   useChangeLanguage(locale);
 
+  // Show a one-time loading overlay for the Korean site across all routes.
+  // This central overlay runs on the client and will hide itself when
+  // the `LoadingCounter` signals onFinish. We initialize visible only for
+  // Korean locale so it doesn't affect other languages (which may render
+  // their own page-level loaders).
+  const [overlayVisible, setOverlayVisible] = useState<boolean>(locale === "ko");
+
   useEffect(() => {
     if (!document) return;
 
@@ -129,7 +171,7 @@ export default function App() {
   }, []);
 
   return (
-    <html suppressHydrationWarning lang={locale} dir={i18n.dir()} className={cn("overscroll-none scroll-smooth", locale === 'ko' ? '[&_[data-koreanable]]:font-korean' : '')} translate="no" style={{ scrollBehavior: 'smooth' }}>
+    <html suppressHydrationWarning lang={locale} dir={i18n.dir()} className={cn("overscroll-none scroll-smooth", locale === "ko" ? "ko-solid" : "")} translate="no" style={{ scrollBehavior: 'smooth' }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -157,6 +199,23 @@ export default function App() {
         )}
       >
         <Header brand={configuration.brand.data} translations={translations} locale={locale} />
+
+        <AnimatePresence>
+          {overlayVisible && (
+            <motion.div
+              key="root-loading-overlay"
+              initial={{ opacity: 1 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -12, transition: { duration: 0.6, ease: "easeInOut" } }}
+              className="fixed inset-0 bg-[#1b1b1b] z-50 flex items-center justify-center"
+            >
+              <div className="text-center max-w-screen-md w-full">
+                <LoadingCounter onFinish={() => setOverlayVisible(false)} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <Outlet
           context={{
             brand: configuration.brand.data,

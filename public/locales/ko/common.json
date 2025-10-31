@@ -17,10 +17,10 @@
   "component.header.about": "About",
   "component.header.career": "Career",
   "component.header.contact": "Contact",
-  "component.client.title": "Clients",
+  "component.client.title": "클라이언트",
   "component.client.description": "다양한 파트너사와 협력하고 있습니다.",
-  "component.contact.title": "작업 문의하기",
-  "component.contact.description": "언제나 함께할 준비가 되어 있습니다.",
+  "component.contact.title": "Contact",
+  "component.contact.description": "Get connected",
   "component.contact.address_1.name": "Head Office (USA)",
   "component.contact.address_1.address": "2221 I St NW, Washington, DC 20037, USA",
   "component.contact.address_2.name": "Seoul Office (Korea)",
@@ -39,20 +39,26 @@
   "home.page.og.description": "건축의 감성과 철학을 영화처럼 표현합니다. 건축 프로젝트를 위한 고퀄리티 조감도, CG 영상, 시각화 솔루션을 제작합니다.",
   "home.page.twitter.title": "Visual Ennode | 조감도 · 건축CG · 시네마틱 영상 제작",
   "home.page.twitter.description": "건축의 감성과 철학을 시네마틱하게 표현하는 Visual Ennode의 영상 제작 서비스",
-  "home.hero-section.visual.slogan": "We visualize",
-  "home.hero-section.ennode.slogan": "We connect",
-  "home.hero-section.visual.cta": "See works",
-  "home.hero-section.ennode.cta": "More about us",
+  "home.hero-section.visual.slogan": "우리의 역할과 가치",
+  "home.hero-section.ennode.slogan": "상상을 현실로, 세상을 연결합니다",
+  "home.hero-section.visual.cta": "작업 보기",
+  "home.hero-section.ennode.cta": "회사 소개 보기",
   "home.hero.title": "ARCHVIZ\nSTUDIO",
-  "home.hero.subtitle": "다양한 부서가 하나로 연결되어 매끄러운 협업을 만들어갑니다",
-  "home.categories.still_image": "Still Image",
-  "home.categories.animation": "Animation",
-  "home.categories.cinematic": "Cinematic",
-  "home.categories.product": "Product",
+  "home.hero.subtitle": "저희는 여러 부서를 하나로 통합해 효율적인 협업을 이룹니다",
+  "home.categories.still_image": "조감도 / 투시도",
+  "home.categories.animation": "애니메이션",
+  "home.categories.cinematic": "시네마틱",
+  "home.categories.still_image_description": "상상을 시각화합니다",
+  "home.categories.cinematic_description": "우리는 이야기 속에 영혼을 엮어냅니다",
+  "work.page.categories.still_image": "조감도 / 투시도",
+  "work.page.categories.cinematic": "시네마틱",
+  "work.page.categories.still_image_description": "우리의 역할과 가치",
+  "work.page.categories.cinematic_description": "상상을 현실로, 세상을 연결합니다",
+  "home.categories.product": "제품 CG",
   "home.categories.vfx": "VFX",
-  "home.summary.services": "SERVICES",
-  "home.service.title": "SELECTED WORKS",
-  "home.service.description": "Visual Ennode의 포트폴리오를 통해 건축 비전을 어떻게 정교하고 창의적으로 구현하는지 확인하세요. 프로젝트를 살펴보며 고품질 시각화 사례를 경험해보세요.",
+  "home.summary.services": "서비스",
+  "home.service.title": "대표적인 작품들",
+  "home.service.description": "저희 3D 렌더링 회사의 인상적인 포트폴리오를 통해 VISUAL ENNODE가 정교함과 창의성으로 건축적 비전을 현실로 구현하는 과정을 직접 경험해보세요. 지금껏 경험하지 못한 시각적 품질을 만나보세요.",
   "ceo.name": "YOONCHANG CHUNG",
   "ceo.title": "CEO | FOUNDER",
   "ceo.message.1": "Visual Ennode는 건축 예술과 영화적 연출을 결합한 결과물입니다. 각 프레임은 공간을 재현할 뿐만 아니라 이야기를 담습니다. 우리는 단순히 이미지를 만드는 것을 넘어서 감정을 불러일으키고, 고요한 디자인을 생동감 있는 영상으로 전환합니다.",
@@ -153,4 +159,44 @@
   "Instagram": "인스타그램",
   "Youtube": "유투브",
   "Graphics, more than just value": "그래픽, 그 이상의 가치"
+  ,
+  "about.process.title": "우리의 프로세스",
+  "about.process.subtitle": "아이디어에서 완성까지, 우리는 체계적인 단계로 프로젝트를 진행합니다.",
+  "about.process.steps": [
+    {
+      "title": "리서치",
+      "subtitles": [
+        "예산 및 일정 상담",
+        "뷰 잠금 / 이미지 범위 상담"
+      ]
+    },
+    {
+      "title": "컨셉 개발",
+      "subtitles": [
+        "3D 작업 및 프로젝트 기획 시작"
+      ]
+    },
+    {
+      "title": "실행 및 제작",
+      "subtitles": [
+        "1차 시안 전달",
+        "2차 시안 전달",
+        "최종 이미지 고해상도 납품"
+      ]
+    },
+    {
+      "title": "검토 및 납품",
+      "subtitles": [
+        "계약 종료",
+        "최종 결제 및 라이선스 이전"
+      ]
+    }
+  ],
+  "about.summary.title": "함께 만드는 가치",
+  "about.summary.paragraphs": [
+    "우리는 디자인과 기술의 결합으로 고객의 아이디어가 실제로 구현되도록 돕습니다.",
+    "프로젝트의 시작부터 끝까지 책임감 있게 파트너로서 함께합니다."
+  ],
+  "about.summary.cta.label": "지금 문의하기",
+  "about.summary.cta.href": "/contact"
 }

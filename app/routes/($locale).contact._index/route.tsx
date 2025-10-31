@@ -6,7 +6,6 @@ import {
   useOutletContext,
 } from "@remix-run/react";
 import { ContactSection } from "~/components/contact-section";
-import { Footer } from "~/components/footer";
 import { Container } from "~/components/ui/container";
 import { AppContext } from "~/root";
 import { ActionFunctionArgs, MetaFunction, json } from "@remix-run/node";
@@ -14,9 +13,82 @@ import { Api } from "~/lib/api";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { loader as rootLoader } from "~/root";
-import { cn, title } from "~/lib/utils";
+import { cn, title, localePath } from "~/lib/utils";
 import { SpinnerIcon } from "~/components/ui/icon";
 import { useIsMobile } from "~/components/hooks/use-mobile";
+
+function LottieThankYou() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+  let mounted = true;
+  let el: HTMLElement | null = null;
+  const container = containerRef.current;
+
+    const ensureScript = () => {
+      if (document.querySelector('script[data-lottie]') || (typeof customElements !== 'undefined' && customElements.get('lottie-player'))) {
+        return Promise.resolve();
+      }
+      return new Promise<void>((resolve) => {
+        const s = document.createElement("script");
+        s.src = "https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js";
+        s.async = true;
+        s.setAttribute("data-lottie", "1");
+        s.onload = () => resolve();
+        document.body.appendChild(s);
+      });
+    };
+
+    ensureScript().then(() => {
+      if (!mounted) return;
+      try {
+        el = document.createElement("lottie-player");
+        el.setAttribute("src", "/videos/waiting sand.json");
+        el.setAttribute("background", "transparent");
+        el.setAttribute("speed", "1");
+        el.setAttribute("loop", "true");
+        el.setAttribute("autoplay", "true");
+        el.setAttribute("aria-hidden", "true");
+        // let the container size control the player; make the player fill its container
+        el.style.width = "100%";
+        el.style.height = "100%";
+        el.style.display = "block";
+        el.className = "object-cover bg-transparent";
+        if (container) container.appendChild(el);
+        // No scaling: keep the Lottie SVG untouched. If you want to re-enable
+        // inner-element scaling later, we can add a targeted transform here.
+      } catch (e) {
+        // ignore
+      }
+    });
+
+    return () => {
+      mounted = false;
+      if (el) {
+        // disconnect any observer attached previously (defensive)
+        try {
+          const obs = (el as unknown as { __lottieScaleObserver?: MutationObserver }).__lottieScaleObserver;
+          if (obs && typeof obs.disconnect === "function") obs.disconnect();
+        } catch (err) {
+          /* ignore */
+        }
+      }
+      if (el && container) container.removeChild(el);
+    };
+  }, []);
+
+  // Responsive container — larger on bigger breakpoints. The mounted
+  // <lottie-player> fills this container (width/height: 100%).
+  return (
+    <div
+      ref={containerRef}
+      aria-hidden
+      // Reduced sizes so the animation doesn't dominate the overlay
+      className="mb-4 w-32 h-44 sm:w-40 sm:h-56 md:w-48 md:h-64 lg:w-56 lg:h-80"
+    />
+  );
+}
 
 export const meta: MetaFunction<unknown, { root: typeof rootLoader }> = ({
   matches,
@@ -145,7 +217,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function Contact() {
-  const { translations: tRaw, brand } = useOutletContext<AppContext>();
+  const { translations: tRaw, locale } = useOutletContext<AppContext>();
   const t = tRaw as unknown as Record<string, string>;
   const emailLabel = t["Email"] ?? "Email";
   const actionData = useActionData<typeof action>();
@@ -181,101 +253,40 @@ export default function Contact() {
   }, [actionData, t]);
 
   return (
-    <>
+    <div className={locale === "ko" ? "ko-solid" : ""}>
       <div
         className={cn(
-          "fixed inset-0 bg-[#1b1b1b] flex-col justify-between z-10 py-20 px-5 hidden",
+          "fixed inset-0 bg-[#1b1b1b] flex-col justify-center items-center z-10 py-12 px-5",
           success && "flex"
         )}
       >
-        <div></div>
-        <div className="flex flex-col items-center">
-          <img
-            src={brand.url}
-            alt={brand.description}
-            className={"w-20 mb-10 lg:w-32 lg:mb-14"}
-          />
-          <h3 className="text-[#bcbcbc] text-center font-semibold text-3xl md:text-5xl mb-2 md:mb-5">
-            {t["Thank you for your information"]}
-          </h3>
-          <p className="text-[#959595] text-xl md:text-3xl font-light text-center">
-            <span className="md:block">
-              {t["We have received your information,"]}
-            </span>{" "}
-            {t["we will contact with you soon"]}
-          </p>
-        </div>
+        <div className="w-full max-w-5xl mx-auto p-4 md:p-6 flex items-center justify-center">
+          <div className="flex flex-col items-center text-center w-full">
+            {/* Thank you animation: use a Lottie JSON (waiting sand) instead of video. */}
+            {/* We dynamically load the lottie-player script client-side and mount the element into a container. */}
+            <LottieThankYou />
 
-        <div className="flex items-center justify-center">
-          <div className="inline-flex items-center text-[#959595]">
-            <span className="text-xl mr-4 md:text-3xl md:mr-7">
-              {t["See us at"]}
-            </span>
-            <div className="flex items-center gap-6 ml-auto">
-              <div className="flex items-center gap-2">
-                <Link
-                  to="https://instagram.com/visual_ennode"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/images/instagram.svg"
-                    className="size-6 md:size-8"
-                    alt="Instagram"
-                  />
-                </Link>
-                <Link
-                  to="https://www.youtube.com/@visualennode"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/images/youtube-square.svg"
-                    className="size-6 md:size-8"
-                    alt="YouTube"
-                  />
-                </Link>
-                <Link
-                  to="https://pf.kakao.com/_ggesn/chat"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/images/talk.svg"
-                    className="size-6 md:size-8"
-                    alt="Talk"
-                  />
-                </Link>
-                <Link
-                  to="https://www.facebook.com/profile.php?id=61573221556208"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/images/fb.svg"
-                    className="size-6 md:size-8"
-                    alt="Facebook"
-                  />
-                </Link>
-                <Link
-                  to="https://blog.naver.com/visualennode"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/images/blog.svg"
-                    className="size-6 md:size-8"
-                    alt="Blog"
-                  />
-                </Link>
-              </div>
-            </div>
+            <h2 className="text-white font-extrabold text-4xl md:text-6xl tracking-tight mb-4">
+              THANK YOU
+            </h2>
+
+            <p className="text-[#bcbcbc] text-base md:text-xl max-w-xl mb-6">
+              <span className="md:block">{t["We have received your information,"]}</span>
+              {" "}
+              {t["we will contact with you soon"]}
+            </p>
+
+            <Link
+              to={localePath(locale, "index")}
+              className="px-4 py-2 bg-white text-[#1b1b1b] rounded-none text-xs font-semibold"
+            >
+              BACK TO HOME
+            </Link>
           </div>
         </div>
+  </div>
 
-      </div>
-
-      <div>
+  <div>
 
         {isMobile ? (
           <>
@@ -309,7 +320,7 @@ export default function Contact() {
                             {t["Hotline"]}
                           </p>
                           <p className="font-extralight text-base">
-                            +82 10 3070 2402
+                            +82 2 515 7400
                           </p>
                         </div>
 
@@ -349,7 +360,7 @@ export default function Contact() {
                               rel="noreferrer"
                               className="underline underline-offset-4 decoration-[#878787] decoration-1"
                             >
-                              +82 10 3070 2402
+                              +82 2 515 7400
                             </a>
                           </p>
                         </div>
@@ -533,7 +544,7 @@ export default function Contact() {
                         {t["Hotline"]}
                       </span>
                       <span className="font-light text-sm sm:text-lg text-[#c3c3c3]">
-                        +82 10 3070 2402
+                        +82 2 515 7400
                       </span>
                     </Link>
                     <Link
@@ -591,7 +602,7 @@ export default function Contact() {
                         {t["Whatsapp"]}
                       </span>
                       <span className="font-light text-sm sm:text-lg text-[#c3c3c3] font-sans">
-                        +82 10 3070 2402
+                        +82 2 515 7400
                       </span>
                     </Link>
                     <Link
@@ -671,7 +682,7 @@ export default function Contact() {
                             {t["Hotline"]}
                           </p>
                           <p className="font-extralight text-base font-sans">
-                            +82 10 3070 2402
+                            +82 2 515 7400
                           </p>
                         </div>
 
@@ -711,7 +722,7 @@ export default function Contact() {
                               rel="noreferrer"
                               className="underline underline-offset-4 decoration-[#878787] decoration-1 font-sans"
                             >
-                              +82 10 3070 2402
+                              +82 2 515 7400
                             </a>
                           </p>
                         </div>
@@ -869,8 +880,7 @@ export default function Contact() {
               <ContactSection />
           </>
         )}
-        <Footer />
       </div>
-    </>
+    </div>
   );
 }

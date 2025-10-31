@@ -6,9 +6,12 @@ import { title } from "~/lib/utils";
 import { ClientSection } from "~/components/client-section";
 import { TeamSection } from "~/components/team-section";
 import { Api } from "~/lib/api";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useOutletContext } from "@remix-run/react";
 import { ContactSection } from "~/components/contact-section";
 import { WorkProcess } from "../($locale)._index/process-section";
+import { AppContext } from "~/root";
+import type { WorkProcessItem } from "~/data/dataWorkProcess";
+import { itemsForLocale } from "~/data/dataWorkProcess";
 
 export const meta: MetaFunction<unknown, { root: typeof rootLoader }> = ({
   matches,
@@ -77,20 +80,29 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function Index() {
   const { clients, teams } = useLoaderData<typeof loader>();
+  const { translations, locale } = useOutletContext<AppContext>();
+  let processItems = (translations as unknown as Record<string, unknown>)[
+    "about.process.steps"
+  ] as WorkProcessItem[] | undefined;
+  if (!processItems) processItems = itemsForLocale(locale);
 
   return (
-    <>
-        <DefinitionSection />
+    <div className={locale === "ko" ? "ko-solid" : ""}>
+      <DefinitionSection />
 
-        <ValueSection />
+      <ValueSection />
 
-        <TeamSection teams={teams} />
 
-        <WorkProcess />
+      {/* gradient divider between definition and value sections to smooth transition */}
+      <div aria-hidden className="w-full h-20 bg-gradient-to-b from-[#1b1b1b] to-transparent" />
 
-        <ClientSection clients={clients} />
+      <TeamSection teams={teams} />
 
-        <ContactSection />
-    </>
-  )
+      <WorkProcess items={processItems} />
+
+      <ClientSection clients={clients} />
+
+      <ContactSection />
+    </div>
+  );
 }

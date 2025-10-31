@@ -24,6 +24,10 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
   >([]);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [hoveredTile, setHoveredTile] = useState<number | null>(null);
+  const [hasAnimatedOnce, setHasAnimatedOnce] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem("serviceTilesAnimated") === "1";
+  });
 
   useImperativeHandle(forwardedRef, () => ref.current as HTMLElement);
 
@@ -94,7 +98,19 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
         setRowIdxMap(rowIndexForNode);
         setDelays(computedDelays);
         // trigger animation start via controls for any other consumers
-        controls.start("visible");
+        // and mark that we've animated once so we don't replay on later views
+        const alreadyAnimated =
+          typeof window !== "undefined" &&
+          sessionStorage.getItem("serviceTilesAnimated") === "1";
+        if (!alreadyAnimated) {
+          try {
+            sessionStorage.setItem("serviceTilesAnimated", "1");
+          } catch (e) {
+            /* ignore storage errors */
+          }
+          setHasAnimatedOnce(true);
+          controls.start("visible");
+        }
       });
   }, [inView, controls]);
 
@@ -156,11 +172,40 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
   const serviceTitleRaw = (t as Record<string, string>)["home.service.title"];
   const serviceTitle = serviceTitleRaw ?? "SELECTED";
   const shouldAppendWorks = !serviceTitleRaw || !/work/i.test(serviceTitleRaw);
-  // If the translation already contains the word 'work' or 'works', color that substring red
-  const workMatch = serviceTitleRaw ? serviceTitleRaw.match(/works?|work/i) : null;
-  const titleBefore = workMatch ? serviceTitleRaw!.slice(0, workMatch.index) : serviceTitle;
-  const titleMatch = workMatch ? workMatch[0] : null;
-  const titleAfter = workMatch ? serviceTitleRaw!.slice((workMatch.index || 0) + (titleMatch?.length || 0)) : "";
+
+  // Determine a substring to highlight in red.
+  // Original logic looked for English 'work(s)'. Add a fallback to detect the
+  // common Korean word '작품' or '작품들' so translations can mark that word red
+  // without changing the component markup.
+  let titleBefore = serviceTitle;
+  let titleMatch: string | null = null;
+  let titleAfter = "";
+
+  if (serviceTitleRaw) {
+    const engMatch = serviceTitleRaw.match(/works?|work/i);
+    if (engMatch && typeof engMatch.index === "number") {
+      titleBefore = serviceTitleRaw.slice(0, engMatch.index);
+      titleMatch = engMatch[0];
+      titleAfter = serviceTitleRaw.slice(engMatch.index + titleMatch.length);
+    } else {
+      // look for Korean highlight words
+      const korCandidates = ["작품들", "작품"];
+      const found = korCandidates
+        .map((w) => ({ w, idx: serviceTitleRaw.indexOf(w) }))
+        .filter((x) => x.idx >= 0)
+        .sort((a, b) => a.idx - b.idx)[0];
+      if (found) {
+        titleBefore = serviceTitleRaw.slice(0, found.idx);
+        titleMatch = found.w;
+        titleAfter = serviceTitleRaw.slice(found.idx + found.w.length);
+      } else {
+        // fallback: no highlighted substring
+        titleBefore = serviceTitle;
+        titleMatch = null;
+        titleAfter = "";
+      }
+    }
+  }
 
   function openModal(url: string) {
     setModalUrl(url);
@@ -198,7 +243,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
   return (
     <section
-      className="min-h-[1000px] md:min-h-[1800px] py-12 md:py-16 relative bg-[#1b1b1b]"
+      className="min-h-[700px] md:min-h-[1400px] py-12 md:py-16 relative bg-[#1b1b1b]"
       ref={ref}
       {...props}
       onMouseMove={(e) => {
@@ -224,7 +269,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
         <div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight">
             {serviceTitleRaw ? (
-              workMatch ? (
+                titleMatch ? (
                 <>
                   {titleBefore}
                   <span className="text-red-500">{titleMatch}</span>
@@ -249,7 +294,7 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
       {/* mosaic grid (full-bleed) */}
       <div className="mt-6 sm:mt-8 md:mt-10 w-full px-0">
         <div className="w-full relative overflow-hidden min-h-[1000px] md:min-h-[1800px] bg-[#1b1b1b]">
-          <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px sm:gap-2 lg:gap-px auto-rows-fr">
+          <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px sm:gap-2 lg:gap-px auto-rows-[minmax(80px,1fr)] sm:auto-rows-[minmax(120px,1fr)] md:auto-rows-[minmax(160px,1fr)] lg:auto-rows-fr">
             {tiles.map((tile, idx) => {
               const url = tileImgs[idx % tileImgs.length];
               const rowForThis =
@@ -320,12 +365,22 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
                   className={`relative overflow-hidden rounded-none bg-gray-800 block group transition-all duration-300`}
                   style={{ gridRowEnd: `span ${tile.rowSpan}` }}
                   initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                  animate={inView ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.9, y: 30 }}
-                  transition={{
-                    delay: delays[idx] ?? rowForThis * 0.12,
-                    duration: 0.8,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
+                  animate={
+                    hasAnimatedOnce
+                      ? { opacity: 1, scale: 1, y: 0 }
+                      : inView
+                      ? { opacity: 1, scale: 1, y: 0 }
+                      : { opacity: 0, scale: 0.9, y: 30 }
+                  }
+                  transition={
+                    hasAnimatedOnce
+                      ? { duration: 0 }
+                      : {
+                          delay: delays[idx] ?? rowForThis * 0.12,
+                          duration: 0.8,
+                          ease: [0.22, 1, 0.36, 1],
+                        }
+                  }
                 >
                   <div
                     className="w-full h-full"
@@ -364,12 +419,14 @@ const ServiceSection = forwardRef<HTMLElement>((props, forwardedRef) => {
 
         {/* CTA centered at bottom */}
         <div className="mt-6 sm:mt-8 md:mt-12 flex justify-center">
-          <Link
-            to={localePath(locale, "works")}
-            className="px-6 sm:px-8 py-2 sm:py-3 bg-white/10 hover:bg-white/20 rounded-full text-white uppercase text-xs sm:text-sm tracking-wide transition-all duration-300"
-          >
-            {t["Explore more"] ?? "explore more"}
-          </Link>
+            <Link
+              to={localePath(locale, "works")}
+              className="px-6 sm:px-8 py-2 sm:py-3 bg-white/10 hover:bg-white/20 rounded-full text-white uppercase text-xs sm:text-sm tracking-wide transition-all duration-300"
+            >
+              {locale === "ko"
+                ? "더 알아보기"
+                : (t as Record<string, string>)["Explore more"] ?? "explore more"}
+            </Link>
         </div>
         {/* section-level shadow removed; using a single overlay directly above the grid for reliability */}
       </div>

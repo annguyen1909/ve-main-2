@@ -10,7 +10,7 @@ const ValueSection = forwardRef<HTMLElement>((props, ref) => {
     <section
       ref={ref}
       // use min-h so the section fits the viewport but doesn't create its own scroll container
-      className="min-h-screen w-full flex lg:block bg-no-repeat bg-center bg-cover bg-[url(/images/value-about.jpg)]"
+      className="w-full flex lg:block bg-no-repeat bg-center bg-cover bg-[url(/images/value-about.jpg)] relative"
       {...props}
     >
       <div className="bg-gradient-to-t from-30% via-[#1b1b1b] via-40% to-[#1b1b1b]/30 lg:bg-gradient-to-r from-[#1b1b1b] lg:from-20% w-full flex items-end lg:items-center text-white flex-none flex-col lg:flex-row min-h-full">

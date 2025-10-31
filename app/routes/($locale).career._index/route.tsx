@@ -1,5 +1,4 @@
-import { Form, Link, MetaFunction, useActionData, useNavigation, useOutletContext } from "@remix-run/react";
-import { Footer } from "~/components/footer";
+import { Form, Link, MetaFunction, useActionData, useOutletContext } from "@remix-run/react";
 import { Container } from "~/components/ui/container";
 import { UploadInput } from "~/components/ui/upload-input";
 import { AppContext } from "~/root"
@@ -55,7 +54,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   
 
   return await api.sendEmailCVApi(data, locale)
-    .then(async (response) => {
+    .then(async () => {
       return {
         errorCode: 0,
       }
@@ -103,7 +102,7 @@ export const meta: MetaFunction<unknown, { "root": typeof rootLoader }> = ({ mat
 export default function Career() {
   const actionData = useActionData<typeof action>();
   const formRef = useRef<HTMLFormElement>(null);
-  const { translations: t, brand } = useOutletContext<AppContext>();
+  const { translations: t, brand, locale } = useOutletContext<AppContext>();
   const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [success, setSuccess] = useState(false);
 
@@ -128,9 +127,9 @@ export default function Career() {
 
     setSuccess(true);
     formRef.current?.reset();
-  }, [actionData])
+  }, [actionData, t])
 
-  const [files, setFiles] = useState<{ cv: File | null; portfolio: File | null }>({
+  const [, setFiles] = useState<{ cv: File | null; portfolio: File | null }>({
     cv: null,
     portfolio: null,
   });
@@ -146,7 +145,7 @@ export default function Career() {
 
   const positions = ["Archviz", "Parttime Archviz", "Editor", "Project Manager"]
 
-  return <>
+  return <div className={locale === "ko" ? "ko-solid" : ""}>
     <div className={cn('fixed inset-0 bg-[#1b1b1b] flex-col justify-between z-10 py-20 px-5 hidden', success && 'flex')}>
       <div></div>
       <div className="flex flex-col items-center" data-koreanable>
@@ -318,7 +317,7 @@ export default function Career() {
           </div>
         </Form>
       </Container>
-      <Footer />
+  {/* Footer removed per request */}
     </section >
-  </>
+  </div>
 }

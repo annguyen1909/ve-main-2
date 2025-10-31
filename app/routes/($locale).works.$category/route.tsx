@@ -164,6 +164,15 @@ export default function Works() {
     };
   }, [showModal, navigateImage]);
 
+  // Disable right-click (context menu) on this page while mounted.
+  useEffect(() => {
+    function onContextMenu(e: Event) {
+      e.preventDefault();
+    }
+    document.addEventListener("contextmenu", onContextMenu);
+    return () => document.removeEventListener("contextmenu", onContextMenu);
+  }, []);
+
   return (
     <section className="min-h-dvh h-auto text-white pt-20">
       {/* Search and Filter Header */}
@@ -427,6 +436,7 @@ export default function Works() {
                                 controls
                                 autoPlay
                                 playsInline
+                                controlsList="nodownload"
                                 muted
                               />
                             )
