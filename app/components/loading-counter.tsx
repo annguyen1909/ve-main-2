@@ -25,6 +25,13 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Respect reduced-motion: if user prefers reduced motion, call onFinish
+    // immediately rather than running the animation.
+    if (prefersReduced) {
+      onFinish?.();
+      return;
+    }
+
     // animate count from 0 to 100 (slower for a longer load feel)
     const controls = animate(count, 100, { duration: 1.5, ease: "easeOut" });
     const unsubscribe = count.onChange((v) => {

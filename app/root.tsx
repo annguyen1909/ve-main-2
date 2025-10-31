@@ -75,8 +75,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   // genericTranslations (so t(key) works for all of those), then also import
   // the locale-specific JSON and merge any keys that are present there but not
   // in the English file (this preserves arrays/objects like about.process.steps).
+  // Build a base translations map from the canonical English keys but prefer
+  // the server-side i18next translation when available. If i18next returns
+  // the raw key (e.g. "home.page.title") we treat that as a missing
+  // translation and fall back to the English value from `genericTranslations`.
   const base = Object.fromEntries(
-    Object.keys(genericTranslations).map((key) => [key, t(key)])
+    Object.keys(genericTranslations).map((key) => {
+      const translated = t(key);
+      const value = translated === key ? (genericTranslations as Record<string, unknown>)[key] : translated;
+      return [key, value];
+    })
   ) as Record<string, unknown>;
 
   let localeExtras: Record<string, unknown> = {};

@@ -138,6 +138,18 @@ export default function Index() {
       }
     });
 
+    // Edge case: if there are no autoplay videos we shouldn't wait for any
+    // video events. If the loading counter finished already, show the page
+    // immediately; otherwise mark videos as ready so the counter's onFinish
+    // will unhide the page.
+    if (autoplayVideoCount === 0) {
+      if (counterDone) {
+        setLoaded(true);
+      } else {
+        setVideosReady(true);
+      }
+    }
+
     return () => {
       videos.forEach((video) => {
         if (video.autoplay) {
