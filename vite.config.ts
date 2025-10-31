@@ -39,5 +39,11 @@ export default defineConfig({
   },
   build: {
     target: "esnext",
+    // Generate source maps so error-reporting services (Sentry, Vercel)
+    // can map minified stack traces back to original TSX/TS files.
+    // Use 'hidden' on Vercel to avoid exposing .map files to end users
+    // while still allowing upload to error-reporting tools.
+    sourcemap: isVercel ? "hidden" : true,
   },
 });
+
