@@ -25,9 +25,15 @@ export default function LoadingCounter({ onFinish }: LoadingCounterProps) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Debug mount
+    // eslint-disable-next-line no-console
+    console.debug("[LoadingCounter] mounted; prefersReduced=", prefersReduced);
+
     // Respect reduced-motion: if user prefers reduced motion, call onFinish
     // immediately rather than running the animation.
     if (prefersReduced) {
+      // eslint-disable-next-line no-console
+      console.debug("[LoadingCounter] prefers-reduced-motion — finishing immediately");
       onFinish?.();
       return;
     }

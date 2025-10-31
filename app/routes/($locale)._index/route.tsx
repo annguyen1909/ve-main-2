@@ -159,6 +159,28 @@ export default function Index() {
     };
   }, [loaded, counterDone, videosReady]);
 
+  // Debug/log changes to loading state so we can observe behavior in prod
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug("[loader state] videosReady=", videosReady, "counterDone=", counterDone, "loaded=", loaded);
+  }, [videosReady, counterDone, loaded]);
+
+  // Fallback: if loading hasn't completed in a reasonable time, force the
+  // page to show so users aren't stuck. This is conservative and will be
+  // removed once the root cause is fixed.
+  useEffect(() => {
+    if (loaded) return;
+    const id = window.setTimeout(() => {
+      // eslint-disable-next-line no-console
+      console.warn("[loader-fallback] timeout reached — forcing loaded=true");
+      setLoaded(true);
+    }, 8000);
+
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, [loaded]);
+
   return (
     <>
       <AnimatePresence>
@@ -181,6 +203,9 @@ export default function Index() {
               <LoadingCounter
                 onFinish={() => {
                   // If videos already ready, finish immediately. Otherwise mark counter done and wait.
+                  // Add a debug log so we can see the counter finish in production logs.
+                  // eslint-disable-next-line no-console
+                  console.debug("[LoadingCounter] onFinish fired. videosReady=", videosReady, "counterDone=", counterDone);
                   if (videosReady) {
                     setLoaded(true);
                   } else {

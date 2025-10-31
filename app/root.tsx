@@ -154,6 +154,35 @@ export default function App() {
     // their own page-level loaders).
     const [overlayVisible, setOverlayVisible] = useState<boolean>(locale === "ko");
 
+  // Global error handlers: if an unexpected exception bubbles to window it
+  // can prevent client code from completing the loading handshake and leave
+  // the overlay visible. Log the error and hide the overlay so users aren't
+  // stuck. This is a conservative, temporary mitigation to avoid blocking
+  // the site while we investigate the root cause.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    function onGlobalError(ev: Event | ErrorEvent) {
+      // eslint-disable-next-line no-console
+      console.error("[global error]", ev);
+      setOverlayVisible(false);
+    }
+
+    function onUnhandledRejection(ev: PromiseRejectionEvent) {
+      // eslint-disable-next-line no-console
+      console.error("[unhandled rejection]", ev);
+      setOverlayVisible(false);
+    }
+
+    window.addEventListener("error", onGlobalError as EventListener);
+    window.addEventListener("unhandledrejection", onUnhandledRejection as EventListener);
+
+    return () => {
+      window.removeEventListener("error", onGlobalError as EventListener);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection as EventListener);
+    };
+  }, []);
+
   useEffect(() => {
 
 

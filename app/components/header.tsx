@@ -346,19 +346,29 @@ export default function Header({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-44 mt-2 rounded-none bg-[#111111] p-6 shadow-lg flex flex-col items-center gap-6"
+                    className="w-44 mt-2 rounded-none bg-transparent p-0 shadow-lg flex flex-col items-center gap-0 border-2 border-white/90"
                   >
+                    {/* Top: selected / primary item — white background, black text */}
                     <DropdownMenuItem
                       onClick={() => switchLocale("en")}
-                      className="w-full text-center text-lg py-3"
+                      className={cn(
+                        "w-full rounded-none text-center text-lg py-3 px-4",
+                        locale === "en"
+                          ? "bg-white text-black"
+                          : "bg-[#1b1b1b] text-white/80 hover:bg-white/5"
+                      )}
                     >
                       English
                     </DropdownMenuItem>
+
+                    {/* Bottom: secondary item — dark background, muted light text */}
                     <DropdownMenuItem
                       onClick={() => switchLocale("ko")}
                       className={cn(
-                        "w-full text-center text-xl font-medium py-4",
-                        locale === "ko" ? "bg-white text-black" : "text-white/80"
+                        "w-full rounded-none text-center text-xl font-medium py-4 px-4",
+                        locale === "ko"
+                          ? "bg-white text-black"
+                          : "bg-[#1b1b1b] text-white/80 hover:bg-white/5"
                       )}
                     >
                       Korean
